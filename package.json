@@ -2,6 +2,8 @@
   "name": "soulsystem-subgraph",
   "license": "UNLICENSED",
   "scripts": {
+    "start:web": "node web/server.cjs",
+    "test:web": "node --test tests/web/*.test.cjs",
     "codegen": "graph codegen",
     "build": "graph build",
     "deploy": "graph deploy --product hosted-service toledoroy/soulsystem_aurora",
@@ -14,5 +16,5 @@
     "@graphprotocol/graph-cli": "0.28.0",
     "@graphprotocol/graph-ts": "0.26.0"
   },
-  "packageManager": "yarn@3.6.0"
+  "packageManager": "yarn@1.22.22"
 }

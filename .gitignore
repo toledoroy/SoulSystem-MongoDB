@@ -3,3 +3,6 @@
 /generated
 package-lock.json
 yarn.lock
+.env
+.env.*
+!.env.example
