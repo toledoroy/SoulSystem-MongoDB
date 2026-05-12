@@ -4,6 +4,7 @@
   "scripts": {
     "start:web": "node web/server.cjs",
     "test:web": "node --test tests/web/*.test.cjs",
+    "mongo:indexes": "node web/apply-indexes.cjs",
     "codegen": "graph codegen",
     "build": "graph build",
     "deploy": "graph deploy --product hosted-service toledoroy/soulsystem_aurora",
@@ -13,8 +14,9 @@
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 toledoroy/soulsystem_aurora"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "0.28.0",
-    "@graphprotocol/graph-ts": "0.26.0"
+    "@graphprotocol/graph-cli": "^0.98.1",
+    "@graphprotocol/graph-ts": "^0.38.2",
+    "mongodb": "^6.16.0"
   },
   "packageManager": "yarn@1.22.22"
 }

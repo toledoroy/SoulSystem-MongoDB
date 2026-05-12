@@ -21,13 +21,13 @@ interface Part {
 }
 
 #Entity: Account
-type Account @entity {
+type Account @entity(immutable: false) {
   id: ID! # account address
   sbt: Soul!
 }
 
 #Log: Payment
-type EvtPayment @entity {
+type EvtPayment @entity(immutable: false) {
   id: ID!
   from: String!
   to: String!
@@ -36,7 +36,7 @@ type EvtPayment @entity {
 }
 
 #Log: Payments Tracking
-type PaymentTotal @entity {
+type PaymentTotal @entity(immutable: false) {
   id: ID!
   from: String!
   to: String!
@@ -45,12 +45,12 @@ type PaymentTotal @entity {
 }
 
 #Entity: OpenRepo [WIP]
-type OpenRepo @entity {
+type OpenRepo @entity(immutable: false) {
   id: ID! # contract address
   conf: [RelAddress!]
 }
 
-type RelAddress @entity {
+type RelAddress @entity(immutable: false) {
   id: ID! # Unique Combo
   owner: String! # Address
   key: String!
@@ -58,29 +58,29 @@ type RelAddress @entity {
 }
 
 #Entity: Hub [WIP]
-type Hub @entity {
+type Hub @entity(immutable: false) {
   id: ID! # Address
   OpenRepo: String! # Address
   conf: [HubConf!]
 }
-type HubConf @entity {
+type HubConf @entity(immutable: false) {
   id: ID! #
 }
 
 #Separate Relations [DEV]
-type GameRelAddress @entity {
+type GameRelAddress @entity(immutable: false) {
   id: ID! # Unique Combo
   origin: Game!
   key: String!
   value: [String!]! # Addresses
 }
-type ProcRelAddress @entity {
+type ProcRelAddress @entity(immutable: false) {
   id: ID! # Unique Combo
   origin: Claim!
   key: String!
   value: [String!]! # Addresses
 }
-type AccountRelAddress @entity {
+type AccountRelAddress @entity(immutable: false) {
   id: ID! # Unique Combo
   origin: Account!
   key: String!
@@ -88,7 +88,7 @@ type AccountRelAddress @entity {
 }
 
 #Entity: Soul
-type Soul @entity {
+type Soul @entity(immutable: false) {
   id: ID! # Token ID
   owner: String! # account address
   type: String! # human or contract type (classified by contract)
@@ -125,7 +125,7 @@ type Soul @entity {
 
 ## Reputation (SBT Opinions on SBT) [DEV]
 #Opinion Change Events
-type SoulOpinionChange @entity {
+type SoulOpinionChange @entity(immutable: false) {
   id: ID! # combination of subject, object, and domain name
   subject: Soul!
   object: Soul!
@@ -137,7 +137,7 @@ type SoulOpinionChange @entity {
 
 #Accumelated Opinion
 type SoulOpinion
-  @entity { # S?H? (SBT->Ext.Token)
+  @entity(immutable: false) { # S?H? (SBT->Ext.Token)
   id: ID! # combination of A,B,R
   aEnd: Soul!
   bEnd: String! # Dest. Token ID
@@ -150,7 +150,7 @@ type SoulOpinion
 }
 
 #Entity: Game
-type Game implements CTX @entity {
+type Game implements CTX @entity(immutable: false) {
   id: ID! # contract address
   hub: String! # hub address
   name: String!
@@ -169,7 +169,7 @@ type Game implements CTX @entity {
 
 #DEPRECATE? Try to use GamePart Instead
 # ERC1155 Token for Game
-type GameRole @entity {
+type GameRole @entity(immutable: false) {
   id: ID! # combination of game address and role id
   ctx: Game!
   roleId: BigInt!
@@ -181,7 +181,7 @@ type GameRole @entity {
 }
 
 #Entity: Rule
-type GameRule @entity {
+type GameRule @entity(immutable: false) {
   id: ID! # combination of game address and role id
   game: Game!
   about: Action!
@@ -201,7 +201,7 @@ type GameRule @entity {
   isDisabled: Boolean!
 }
 
-type GameRuleEffect @entity {
+type GameRuleEffect @entity(immutable: false) {
   id: ID! # combination of game address, rule id, effect name
   rule: GameRule!
   name: String!
@@ -210,7 +210,7 @@ type GameRuleEffect @entity {
 }
 
 #TODO: Update Like ProcNominations
-type GameNomination @entity {
+type GameNomination @entity(immutable: false) {
   id: ID! # combination of game address and event transaction address
   game: Game!
   createdDate: BigInt!
@@ -219,7 +219,7 @@ type GameNomination @entity {
   #uri: [String!]! #TBD
 }
 
-type GamePost implements Post @entity {
+type GamePost implements Post @entity(immutable: false) {
   id: ID! # combination of game address and event transaction address
   entity: Game!
   createdDate: BigInt
@@ -230,7 +230,7 @@ type GamePost implements Post @entity {
 }
 
 #Entity: Action
-type Action @entity {
+type Action @entity(immutable: false) {
   id: ID! # guid
   subject: String
   verb: String
@@ -242,7 +242,7 @@ type Action @entity {
 }
 
 #Entity: Process (Claim/Task/etc')
-type Claim implements CTX @entity {
+type Claim implements CTX @entity(immutable: false) {
   id: ID! # contract address
   hub: String # hub address
   name: String!
@@ -263,7 +263,7 @@ type Claim implements CTX @entity {
 }
 
 type ProcStageURI
-  @entity { # [DEV]
+  @entity(immutable: false) { # [DEV]
   id: ID! # combination of claim address and stage name
   entity: Claim!
   stage: Int!
@@ -272,7 +272,7 @@ type ProcStageURI
 }
 
 # ERC1155 Token for Process
-type ProcRole @entity {
+type ProcRole @entity(immutable: false) {
   id: ID! # combination of claim address and role id
   ctx: Claim!
   name: String!
@@ -284,7 +284,7 @@ type ProcRole @entity {
   soulsCount: Int!
 }
 
-type ProcNomination @entity {
+type ProcNomination @entity(immutable: false) {
   id: ID! # combination of claim address and event transaction address
   claim: Claim!
   createdDate: BigInt!
@@ -294,7 +294,7 @@ type ProcNomination @entity {
   status: String
 }
 
-type ProcPost implements Post @entity {
+type ProcPost implements Post @entity(immutable: false) {
   id: ID! # combination of claim address and event transaction address
   entity: Claim!
   createdDate: BigInt
@@ -305,20 +305,20 @@ type ProcPost implements Post @entity {
 }
 
 #[WIP]
-type GameParticipant implements Part @entity {
+type GameParticipant implements Part @entity(immutable: false) {
   id: ID!
   entity: Game!
   sbt: Soul!
   roles: [String!]! #Tokens
 }
-type ProcParticipant implements Part @entity {
+type ProcParticipant implements Part @entity(immutable: false) {
   id: ID!
   entity: Claim!
   sbt: Soul!
   roles: [String!]!
 }
 
-type GameAssoc @entity {
+type GameAssoc @entity(immutable: false) {
   id: ID! # combination of claim address and SBT & roleId address
   bEnt: Game! # Group
   sbt: Soul! # Entity
@@ -327,7 +327,7 @@ type GameAssoc @entity {
 }
 
 type ProcAssoc
-  @entity { # DEPRECATED & UNUSED
+  @entity(immutable: false) { # DEPRECATED & UNUSED
   id: ID! # combination of claim address and SBT & roleId address
   bEnt: Claim! # Group
   sbt: Soul! # Entity
@@ -338,7 +338,7 @@ type ProcAssoc
 # Semantic Relations
 
 type SoulAssoc
-  @entity { #S2H0 (SBT->SBT)
+  @entity(immutable: false) { #S2H0 (SBT->SBT)
   id: ID! # combination of A,B,R
   aEnd: Soul!
   bEnd: Soul!
@@ -347,7 +347,7 @@ type SoulAssoc
 }
 
 type SoulPart
-  @entity { #S3H1 (SBT->SBTx2)
+  @entity(immutable: false) { #S3H1 (SBT->SBTx2)
   id: ID! # combination of A,B,R
   aEnd: Soul!
   bEnd: Soul!
@@ -357,14 +357,14 @@ type SoulPart
 }
 
 type SoulAttr
-  @entity { # S4H0 (SBT->String)
+  @entity(immutable: false) { # S4H0 (SBT->String)
   id: ID! # combination of A,B,R
   aEnd: Soul!
   bEnd: String!
   role: String!
 }
 
-type SoulPost implements Post @entity {
+type SoulPost implements Post @entity(immutable: false) {
   id: ID!
   createdDate: BigInt
   author: Soul!
