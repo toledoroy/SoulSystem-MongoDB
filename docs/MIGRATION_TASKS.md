@@ -29,10 +29,10 @@
 
 - [x] Add a real MongoDB driver connection factory around the repository adapter.
 - [x] Apply index specs to the live MongoDB database.
-- [ ] Create a database abstraction layer that owns collection names, deterministic ID helpers, and collection-scoped repository methods.
-- [ ] Add graph-shaped mapper APIs for account, soul, game, and claim records.
-- [ ] Replace planned ABI-derived reads with API payload fields, service lookups, or mapper defaults.
-- [ ] Split Web2 runtime modules from Web3 legacy reference modules so new app code does not import `abis/`, `generated/`, `subgraph.yaml`, or `src/handlers/`.
+- [x] Create a database abstraction layer that owns collection names, deterministic ID helpers, and collection-scoped repository methods.
+- [x] Add graph-shaped mapper APIs for account, soul, game, and claim records.
+- [x] Replace planned ABI-derived reads with API payload fields, service lookups, or mapper defaults.
+- [x] Split Web2 runtime modules from Web3 legacy reference modules so new app code does not import `abis/`, `generated/`, `subgraph.yaml`, or `src/handlers/`.
 - [ ] Add HTTP JSON API routes for off-chain soul CRUD.
 - [ ] Add HTTP JSON API routes for off-chain game and claim CRUD.
 - [ ] Add request validation and consistent error responses.

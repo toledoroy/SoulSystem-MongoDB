@@ -19,3 +19,9 @@
 ### Deployments
 - Mumbai - https://thegraph.com/hosted-service/subgraph/toledoroy/bountyprotocol
 - Aurora - https://thegraph.com/hosted-service/subgraph/toledoroy/soulsystem_aurora
+
+## Runtime Boundaries
+
+New Web2 runtime code lives under `web/` and should depend on HTTP handlers, application services, mappers, and the MongoDB database abstraction.
+
+Legacy Web3 reference code lives in `abis/`, `generated/`, `subgraph.yaml`, `schema.graphql`, and `src/handlers/`. These files document contract and graph behavior during the migration, but new Web2 modules should not import generated subgraph bindings or ABI JSON directly.

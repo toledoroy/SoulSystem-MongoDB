@@ -1,18 +1,17 @@
+const {
+  mapAccount,
+  mapSoul,
+  mapSoulPatch,
+  mapGame,
+  mapClaim,
+} = require("./domain/mappers.cjs");
+
 async function createSoul(repo, input) {
-  const soul = {
-    owner: input.owner,
-    type: input.type || "human",
-    role: input.role || "",
-    stage: numberOrDefault(input.stage, 0),
-    name: input.name || "",
-    handle: input.handle || "",
-    tags: input.tags || [],
-  };
+  const soul = mapSoul(input);
+  const account = mapAccount(input);
 
-  soul.searchField = makeSearchField(soul);
-
-  await repo.upsertSoul(input.soulId, soul);
-  await repo.upsertAccount(input.owner, { soulId: input.soulId });
+  await repo.upsertSoul(soul._id, withoutId(soul));
+  await repo.upsertAccount(account._id, withoutId(account));
 }
 
 async function updateSoulProfile(repo, input) {
@@ -21,55 +20,22 @@ async function updateSoulProfile(repo, input) {
     throw new Error("Soul not found");
   }
 
-  const patch = pickDefined({
-    name: input.name,
-    handle: input.handle,
-    image: input.image,
-    tags: input.tags,
-    role: input.role,
-    stage: input.stage,
-  });
-
-  patch.searchField = makeSearchField({ ...existing, ...patch });
-
-  await repo.upsertSoul(input.soulId, patch);
+  await repo.upsertSoul(input.soulId, mapSoulPatch(existing, input));
 }
 
 async function createGame(repo, input) {
-  await repo.upsertGame(input.gameId, {
-    name: input.name || "",
-    type: input.type || "game",
-    role: input.role || "",
-  });
+  const game = mapGame(input);
+  await repo.upsertGame(game._id, withoutId(game));
 }
 
 async function createClaim(repo, input) {
-  await repo.upsertClaim(input.claimId, {
-    game: input.gameId || "",
-    name: input.name || "",
-    type: input.type || "claim",
-    role: input.role || "",
-    stage: numberOrDefault(input.stage, 0),
-  });
+  const claim = mapClaim(input);
+  await repo.upsertClaim(claim._id, withoutId(claim));
 }
 
-function makeSearchField(entity) {
-  const fields = [];
-  if (entity.name) fields.push(entity.name);
-  if (entity.owner) fields.push(entity.owner);
-  return fields.join("").toLowerCase();
-}
-
-function pickDefined(input) {
-  const output = {};
-  for (const [key, value] of Object.entries(input)) {
-    if (value !== undefined) output[key] = value;
-  }
-  return output;
-}
-
-function numberOrDefault(value, fallback) {
-  return typeof value === "number" ? value : fallback;
+function withoutId(record) {
+  const { _id, ...rest } = record;
+  return rest;
 }
 
 module.exports = {

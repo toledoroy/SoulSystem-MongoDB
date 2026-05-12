@@ -1,35 +1,28 @@
+const { createDatabase } = require("./db/database.cjs");
+
 function createMongoRepository(db) {
+  const database = createDatabase(db);
+
   return {
     async getSoul(id) {
-      return db.collection("souls").findOne({ _id: id });
+      return database.souls.get(id);
     },
     async upsertSoul(id, patch) {
-      await upsertById(db, "souls", id, patch);
+      await database.souls.upsert(id, patch);
     },
     async deleteSoul(id) {
-      await db.collection("souls").deleteOne({ _id: id });
+      await database.souls.delete(id);
     },
     async upsertAccount(address, patch) {
-      await upsertById(db, "accounts", address, patch);
+      await database.accounts.upsert(address, patch);
     },
     async upsertGame(address, patch) {
-      await upsertById(db, "games", address, patch);
+      await database.games.upsert(address, patch);
     },
     async upsertClaim(address, patch) {
-      await upsertById(db, "claims", address, patch);
+      await database.claims.upsert(address, patch);
     },
   };
-}
-
-async function upsertById(db, collectionName, id, patch) {
-  await db.collection(collectionName).updateOne(
-    { _id: id },
-    {
-      $set: patch,
-      $setOnInsert: { _id: id },
-    },
-    { upsert: true },
-  );
 }
 
 module.exports = {
