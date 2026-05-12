@@ -1,10 +1,11 @@
 # MongoDB Migration Task Tracker
 
-**Last updated:** 2026-05-10
+**Last updated:** 2026-05-12
 
 ## Current Baseline
 
 - [x] Create PRD for the Web3-to-Web2 MongoDB migration.
+- [x] Correct target architecture: off-chain MongoDB application with no chain/RPC ingestion.
 - [x] Add a homepage indicator for MongoDB availability.
 - [x] Add a `/health/mongo` JSON health endpoint.
 - [x] Add `mongodb+srv://` support for MongoDB Atlas-style connection strings.
@@ -14,20 +15,39 @@
 
 ## Preliminary Tasks
 
-- [ ] Resolve legacy dependency install blockers and commit the generated lockfile.
+- [x] Resolve legacy dependency install blockers and generate a trackable lockfile.
 - [x] Confirm `yarn test:web` passes through the package script.
-- [ ] Confirm `yarn codegen` still works for the legacy subgraph.
-- [ ] Confirm `yarn build` still works for the legacy subgraph.
+- [x] Confirm `yarn codegen` still works for the legacy subgraph.
+- [x] Confirm `yarn build` still works for the legacy subgraph.
 - [x] Decide the initial backend stack for the migration API: plain Node HTTP while the data layer is being established.
-- [ ] Decide whether MongoDB access should use the native driver directly or a model layer after the first projection slice.
+- [x] Decide MongoDB access pattern for the first slice: native-driver-shaped repository adapter with projection code kept driver-independent.
 - [x] Add MongoDB collection/index initialization specs.
-- [x] Add raw event and checkpoint collection index specs.
-- [ ] Port the first projection slice:
-  - `Soul.Transfer`
-  - `Soul.URI`
-  - `Soul.SoulType`
-  - `Soul.SoulHandle`
-  - `Hub.ContractCreated`
+- [x] Add Mongo repository adapter for application-owned records.
+- [x] Add off-chain application service for creating/updating souls, games, and claims.
+
+## Next Implementation Slice
+
+- [x] Add a real MongoDB driver connection factory around the repository adapter.
+- [x] Apply index specs to the live MongoDB database.
+- [ ] Create a database abstraction layer that owns collection names, deterministic ID helpers, and collection-scoped repository methods.
+- [ ] Add graph-shaped mapper APIs for account, soul, game, and claim records.
+- [ ] Replace planned ABI-derived reads with API payload fields, service lookups, or mapper defaults.
+- [ ] Split Web2 runtime modules from Web3 legacy reference modules so new app code does not import `abis/`, `generated/`, `subgraph.yaml`, or `src/handlers/`.
+- [ ] Add HTTP JSON API routes for off-chain soul CRUD.
+- [ ] Add HTTP JSON API routes for off-chain game and claim CRUD.
+- [ ] Add request validation and consistent error responses.
+- [ ] Add read endpoints for homepage/application views.
+- [ ] Add live Mongo smoke tests for create/read/update using a test namespace or cleanup-safe records.
+
+## Architecture Adjustments
+
+- Contracts should be modeled as MongoDB collections and graph-shaped documents, not live contract handles.
+- ABI calls should be replaced by mapper API calls that normalize Web2 request payloads into deterministic records.
+- The Graph schema should remain the source reference for entity shape, relationship names, and deterministic IDs during migration.
+- The tile/module structure should separate Web2 runtime code from Web3 legacy code:
+  - Web2 runtime: HTTP routes, validation, application services, mappers, database abstraction, Mongo repository adapters.
+  - Web3 legacy reference: ABIs, subgraph manifest, generated bindings, AssemblyScript handlers.
+  - Shared references: documented schema conventions and deterministic ID rules only.
 
 ## Verification Commands
 
@@ -36,15 +56,21 @@ yarn test:web
 yarn codegen
 yarn build
 yarn start:web
+yarn mongo:indexes
 ```
 
 With `MONGODB_URI` configured, open `http://localhost:3000` and confirm the MongoDB badge says `Available`.
 
-## Dependency Install Blocker
+## Dependency Install Resolution
 
-`yarn install --ignore-scripts` is currently blocked by legacy Graph CLI transitive dependencies that reference missing repositories:
+The old dependency blocker was caused by `@graphprotocol/graph-cli@0.28.0` resolving transitive GitHub repositories that no longer exist:
 
 - `https://github.com/edgeandnode/gluegun.git`
 - `ssh://git@github.com/hugomrdias/concat-stream.git`
 
-Until this is resolved, use `yarn test:web` for the new Web2 starter tests and avoid relying on a clean dependency install for the legacy subgraph.
+This was resolved by upgrading Graph packages:
+
+- `@graphprotocol/graph-cli` to `^0.98.1`
+- `@graphprotocol/graph-ts` to `^0.38.2`
+
+Modern Graph tooling also required all GraphQL `@entity` directives to include `immutable`; the legacy schema is mutable, so entities are marked `immutable: false`.

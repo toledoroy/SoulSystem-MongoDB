@@ -12,8 +12,6 @@ test("defines indexes for the first MongoDB migration collections", () => {
     "souls",
     "games",
     "claims",
-    "rawEvents",
-    "indexerCheckpoints",
   ]);
 
   assert.deepEqual(specs.find((spec) => spec.collection === "souls").indexes, [
@@ -41,5 +39,5 @@ test("creates MongoDB indexes from the specs", async () => {
     keys: { soulId: 1 },
     options: { name: "accounts_soulId", sparse: true },
   });
-  assert.ok(calls.some((call) => call.options.name === "raw_events_unique_log"));
+  assert.ok(calls.some((call) => call.options.name === "claims_game"));
 });

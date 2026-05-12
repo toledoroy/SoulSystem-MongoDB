@@ -1,12 +1,12 @@
 # SoulSystem MongoDB Migration PRD
 
-**Last updated:** 2026-05-10
+**Last updated:** 2026-05-12
 
 ## Summary
 
-SoulSystem is being migrated from a Web3-first indexing model, based on The Graph subgraph mappings, into a Web2-style MongoDB-backed application data layer. The current repository still represents the original subgraph implementation: contract ABIs, `subgraph.yaml`, GraphQL schema entities, and AssemblyScript event handlers that persist to The Graph store.
+SoulSystem is being migrated from a Web3-first indexing model into a Web2, off-chain MongoDB application. MongoDB is the application database and source of truth for new app data. The current repository still contains the original subgraph implementation as legacy reference material: contract ABIs, `subgraph.yaml`, GraphQL schema entities, and AssemblyScript event handlers.
 
-The next milestone is not a UI or product feature. It is a backend migration foundation: define MongoDB collections, convert the existing event-derived entities into MongoDB documents, and choose how blockchain event ingestion will run outside The Graph.
+The next milestone is not chain ingestion. It is a backend application foundation: define a database abstraction layer, map graph-shaped domain records into MongoDB collections, expose HTTP APIs, and move product behavior to MongoDB-backed off-chain records.
 
 ## Current Progress Review
 
@@ -32,64 +32,81 @@ The next milestone is not a UI or product feature. It is a backend migration fou
   - nominations, posts, stage changes, and payments
   - OpenRepo attributes and associations
   - Soul opinions and opinion history
+- Web2 migration scaffolding has started:
+  - homepage MongoDB availability indicator
+  - `/health/mongo` health endpoint
+  - MongoDB index specifications for first-slice collections
+  - MongoDB repository adapter for core app-owned records
+  - off-chain application service for creating/updating souls, games, and claims
 
 ### Not Started / Missing
 
-- No MongoDB connection code exists.
-- No MongoDB schemas, models, migrations, or indexes exist.
-- No backend API layer exists.
-- No event ingestion worker exists outside The Graph.
-- No replay/checkpoint mechanism exists for indexing historical chain events into MongoDB.
-- No tests exist for the current mapping behavior or the intended MongoDB behavior.
-- No PRD existed before this document.
+- MongoDB index specs exist and have been applied to the live database for the first-slice collections.
+- A minimal backend homepage/health endpoint exists, but no application read API exists yet.
+- No HTTP JSON API exists yet for app-owned soul/game/claim CRUD.
+- No request validation layer exists yet.
+- Tests exist for the new Web2 scaffolding and first off-chain service slice, but not for the full application workflow surface.
 
 ### Local Verification
 
-`yarn build` could not run because the project references a missing Yarn release file:
+Local package installation, code generation, and legacy subgraph build now run after upgrading the old Graph packages and updating schema entity directives for modern Graph tooling.
 
-```text
-.yarn/releases/yarn-3.6.0.cjs
-```
+Verified commands:
 
-This should be fixed before relying on local build validation.
+- `yarn install`
+- `yarn test:web`
+- `yarn codegen`
+- `yarn build`
+- `yarn mongo:indexes`
 
 ## Migration Goal
 
-Replace The Graph as the primary application query layer with a MongoDB-backed Web2 service while preserving the domain state currently produced by subgraph indexing.
+Replace The Graph/Web3 indexing as the product data layer with a MongoDB-backed Web2 service.
 
 The migrated system should:
 
-- ingest blockchain events from configured contracts,
-- transform those events using equivalent business rules,
-- persist query-ready documents in MongoDB,
+- create and update application records directly in MongoDB,
+- persist query-ready MongoDB documents for souls, games, claims, posts, relationships, payments, and activity,
 - expose application-friendly APIs,
-- support deterministic historical replay,
-- keep enough raw event history for auditing and reprocessing.
+- support normal Web2 validation, authorization, and audit fields.
 
 ## Non-Goals
 
 - Rewriting smart contracts.
 - Changing protocol event semantics.
 - Building a new frontend before the data layer is reliable.
-- Removing all Web3 support; the migration is from Web3-indexed persistence to Web2 application persistence, not from blockchain data to manually entered data.
+- Reading chain data, decoding logs, replaying blocks, or relying on RPCs for application state.
 
 ## Target Architecture
 
+### Boundary Direction
+
+The migration should introduce a stable database abstraction before adding more product APIs. The application service layer should depend on domain repositories and mapper APIs, not direct MongoDB driver calls or legacy ABI calls.
+
+- **Contracts become collections:** every legacy contract-centered concept should be represented as one or more MongoDB collections with deterministic `_id` values that preserve graph lookup behavior.
+- **ABI calls become mapper API calls:** places that formerly called contract bindings or event-derived helpers should call mappers that normalize API input into graph-shaped domain documents.
+- **Graph schema remains the shape reference:** collection documents should preserve the important entity names, relationship keys, and deterministic IDs from `schema.graphql`, while adapting fields for Web2 validation and application writes.
+- **Web3 stays isolated:** `abis/`, `subgraph.yaml`, `generated/`, and `src/handlers/` should remain legacy reference and verification material until retired. New Web2 modules should not import generated subgraph bindings.
+
 ### Proposed Components
 
-- **Event Ingestion Worker**
-  - Uses an EVM client such as `viem` or `ethers`.
-  - Reads logs from configured contracts and block ranges.
-  - Stores raw events before applying projections.
-  - Tracks checkpoints per chain, contract, and event source.
+- **Application Service Layer**
+  - Creates and updates MongoDB records from app/API requests.
+  - Encapsulates business rules that were formerly implied by contract/subgraph behavior.
+  - Keeps persistence operations idempotent where useful for retries.
 
-- **Projection Layer**
-  - Converts decoded events into MongoDB updates.
-  - Ports logic from `src/handlers/*.ts`.
-  - Uses idempotent upserts so replay is safe.
+- **Database Abstraction Layer**
+  - Owns collection names, deterministic ID helpers, common read/write methods, and transaction/session hooks when needed.
+  - Exposes graph-shaped repository interfaces such as `souls`, `accounts`, `games`, `claims`, and relation collections.
+  - Keeps MongoDB driver details out of mappers, HTTP handlers, and application services.
+
+- **Mapper Layer**
+  - Replaces direct ABI-style reads with explicit API-to-domain mapping functions.
+  - Converts request payloads into graph-shaped records and projections.
+  - Centralizes normalization for addresses, IDs, metadata fields, role references, participant relationships, and search fields.
 
 - **MongoDB**
-  - Stores query-ready documents and raw event history.
+  - Stores query-ready application documents.
   - Uses indexes for owner lookups, soul lookups, context membership, posts, and payment totals.
 
 - **API Layer**
@@ -97,6 +114,8 @@ The migrated system should:
   - Can be REST, GraphQL, or tRPC depending on the consuming app.
 
 ## Proposed MongoDB Collections
+
+The collection layout should resemble the graph schema rather than the ABI layout. Contract addresses and token IDs remain useful deterministic identifiers, but the application should treat them as record IDs, not live contract handles.
 
 ### Core Identity
 
@@ -173,48 +192,55 @@ These should preserve token quantities and role names. The existing code has bot
 
 The ERC20 payment handler currently records individual events but does not update aggregate totals. The MongoDB implementation should make native and ERC20 payment aggregation consistent.
 
-### Indexing Infrastructure
-
-- `rawEvents`
-  - chain id, contract address, event name, block number, transaction hash, log index, decoded args, ingestion timestamp
-
-- `indexerCheckpoints`
-  - chain id, source name, contract address, last processed block, last processed log cursor
-
 ## Important Porting Notes
 
 - The Graph `store.remove` behavior must become explicit MongoDB deletes or soft deletes.
 - Graph entity IDs should become deterministic Mongo `_id` values to preserve current lookup behavior.
-- Dynamic templates for games and claims must become runtime contract registration in the ingestion worker.
+- Repository methods should accept already-mapped domain records. Mapper functions should own field defaults, ID composition, and graph-shaped projections.
+- Contract ABI helper calls in legacy handlers should be ported as mapper/API calls only when the related workflow is rebuilt for Web2.
 - IPFS metadata loading should be moved behind a reusable metadata service with retry, timeout, and cache behavior.
-- Existing event handlers often skip records when referenced souls/accounts are missing. The MongoDB version should decide whether to keep this strict behavior or create pending references for later reconciliation.
-- Array updates must be idempotent. Current handler logic can push duplicate role IDs or nominators if the same event is replayed without safeguards.
+- Existing event handlers often skipped records when referenced souls/accounts were missing. The MongoDB app should use explicit validation and return clear errors instead.
+- Array updates must be idempotent where API retries may occur.
 
 ## Risks And Open Questions
 
 - Which runtime should own the Web2 service: Node/Express, Next.js API routes, NestJS, or another existing app?
 - Which MongoDB library should be used: native driver, Mongoose, Prisma MongoDB, or another ODM?
-- Will the system continue indexing Aurora only, or should the migration support multiple chains from the start?
-- Should raw blockchain events be the only source of truth, or will Web2-only mutations be introduced?
+- What authentication/authorization model should guard writes?
 - What API compatibility is required for existing frontend consumers?
-- How much historical data must be backfilled before launch?
 - Should IPFS metadata be stored as raw bytes, normalized JSON, or both?
 
 ## Recommended Next Steps
 
 ### 1. Restore Local Tooling
 
-- Add the missing Yarn release file or switch the project to a supported package-manager setup.
-- Confirm `yarn install`, `yarn codegen`, and `yarn build` work for the current subgraph before porting behavior.
+- Completed: package installation, Web2 tests, Graph code generation, and Graph build now run locally.
+- Continue tracking the generated `yarn.lock` so the upgraded dependency tree remains reproducible.
 
 ### 2. Decide Backend Stack
 
 - Pick the service runtime and MongoDB library.
-- Add environment configuration for MongoDB URI, chain RPC URL, chain id, contract addresses, and start blocks.
+- Add environment configuration for MongoDB URI and database name.
 
-### 3. Define MongoDB Schemas And Indexes
+### 3. Define The Database Abstraction
 
-- Start with `accounts`, `souls`, `games`, `claims`, `rawEvents`, and `indexerCheckpoints`.
+- Create a database module that exposes collection-scoped repositories instead of raw MongoDB driver calls.
+- Move collection names and deterministic `_id` composition into shared helpers.
+- Keep the repository interface graph-shaped so services can work against `accounts`, `souls`, `games`, `claims`, and later relation collections consistently.
+
+### 4. Add API Mappers For Graph-Shaped Records
+
+- Add mapper functions that transform Web2 API payloads into domain records resembling the Graph schema.
+- Replace planned ABI-derived field reads with explicit mapper inputs or service lookups.
+- Start with:
+  - account to soul mapping
+  - soul profile document
+  - game context document
+  - claim/process context document
+
+### 5. Define MongoDB Schemas And Indexes
+
+- Continue with `accounts`, `souls`, `games`, and `claims`.
 - Add indexes for:
   - `souls.owner`
   - `souls.handle`
@@ -222,42 +248,39 @@ The ERC20 payment handler currently records individual events but does not updat
   - `games.hub`
   - `claims.hub`
   - `claims.game`
-  - `rawEvents.blockNumber`
-  - `rawEvents.transactionHash + rawEvents.logIndex`
 
-### 4. Port The First Projection Slice
+### 6. Build The First Application Service Slice
 
 Start with the smallest useful vertical slice:
 
-- `Soul.Transfer`
-- `Soul.URI`
-- `Soul.SoulType`
-- `Soul.SoulHandle`
-- `Hub.ContractCreated`
+- create soul
+- update soul profile
+- create game
+- create claim
 
-This creates the identity and context foundation required by most later handlers.
+This creates the identity and context foundation required by most later app workflows.
 
-### 5. Add Replay-Safe Tests
+### 7. Add Replay-Safe Tests
 
-For each ported event handler:
+For each application write flow:
 
-- applying the same event twice should not duplicate arrays or inflate totals,
-- applying burn/remove events should remove or decrement the right records,
-- missing references should produce the chosen pending/skip behavior,
-- checkpoint updates should happen only after successful projection.
+- validate required fields,
+- avoid duplicate array entries on retries,
+- return clear errors for missing references,
+- persist consistent search/index fields.
 
-### 6. Port Remaining Domain Events
+### 8. Build Remaining Domain Services
 
 Recommended order:
 
-1. `OpenRepo.StringSet`, `AddressAdd`, `AddressSet`
-2. `Game.RoleCreated`, `TransferByToken`, `Nominate`, `Post`, `URI`
-3. `Claim.Stage`, `RoleCreated`, `TransferByToken`, `Nominate`, `Post`, `URI`
-4. `Claim.PaymentReleased`, `ERC20PaymentReleased`
-5. `ActionRepo.ActionAdded`, `ActionURI`
-6. `Soul.Announcement`, `OpinionChange`
+1. Soul attributes and associations
+2. Game roles, participants, nominations, and posts
+3. Claim stages, roles, participants, nominations, and posts
+4. Payments and payment totals
+5. Actions/activity records
+6. Opinions and announcements
 
-### 7. Build Read APIs
+### 9. Build Read APIs
 
 Create API endpoints around actual app workflows, not one endpoint per collection. First candidates:
 
@@ -270,10 +293,7 @@ Create API endpoints around actual app workflows, not one endpoint per collectio
 
 ## Acceptance Criteria For Migration Foundation
 
-- MongoDB can be populated from a clean database by replaying events from configured start blocks.
-- Re-running the indexer over the same block range produces the same MongoDB state.
-- Core identity data, game creation, and claim creation match the current subgraph semantics.
-- Raw events and checkpoints make failures recoverable.
-- Automated tests cover at least the first projection slice.
-- The README documents how to configure, run, and verify the MongoDB indexer.
-
+- MongoDB can be populated and queried through off-chain application APIs.
+- Core identity data, game creation, and claim creation are stored directly in MongoDB.
+- Automated tests cover at least the first application service slice.
+- The README documents how to configure, run, and verify the MongoDB-backed app service.
