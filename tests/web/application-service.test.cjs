@@ -6,6 +6,7 @@ const {
   updateSoulProfile,
   deleteSoul,
   createGame,
+  createGameNomination,
   createGamePost,
   createGameRole,
   updateGame,
@@ -237,6 +238,36 @@ test("creates game posts for existing game and author soul", async () => {
   ]);
 });
 
+test("creates game nominations for existing game and souls", async () => {
+  const repo = createRecordingRepo({
+    game: { _id: "0xgame", name: "Guild" },
+    souls: new Map([
+      ["42", { _id: "42", owner: "0xabc" }],
+      ["77", { _id: "77", owner: "0xdef" }],
+    ]),
+  });
+
+  await createGameNomination(repo, {
+    gameId: "0xGAME",
+    nominationId: "tx-1",
+    nominatorSoulId: "42",
+    nominatedSoulId: "77",
+    createdDate: 123,
+  });
+
+  assert.deepEqual(repo.calls, [
+    ["getGame", "0xgame"],
+    ["getSoul", "42"],
+    ["getSoul", "77"],
+    ["upsertGameNomination", "0xgame_tx-1", {
+      game: "0xgame",
+      createdDate: 123,
+      nominator: "42",
+      nominated: "77",
+    }],
+  ]);
+});
+
 test("requires existing game domain records before game role writes", async () => {
   const repo = createRecordingRepo();
 
@@ -250,6 +281,15 @@ test("requires existing game domain records before game role writes", async () =
   );
   await assert.rejects(
     () => createGamePost(repo, { gameId: "0xmissing", postId: "tx", authorSoulId: "42", uri: "ipfs:\/\/post" }),
+    /Game not found/,
+  );
+  await assert.rejects(
+    () => createGameNomination(repo, {
+      gameId: "0xmissing",
+      nominationId: "tx",
+      nominatorSoulId: "42",
+      nominatedSoulId: "77",
+    }),
     /Game not found/,
   );
 });
@@ -423,6 +463,9 @@ function createRecordingRepo(seed = {}) {
     },
     async upsertGamePost(id, patch) {
       this.calls.push(["upsertGamePost", id, patch]);
+    },
+    async upsertGameNomination(id, patch) {
+      this.calls.push(["upsertGameNomination", id, patch]);
     },
     async upsertClaim(id, patch) {
       this.calls.push(["upsertClaim", id, patch]);

@@ -5,6 +5,7 @@ const collections = {
   claims: "claims",
   gameRoles: "gameRoles",
   gameParticipants: "gameParticipants",
+  gameNominations: "gameNominations",
   gamePosts: "gamePosts",
   soulAttributes: "soulAttributes",
   soulAssociations: "soulAssociations",

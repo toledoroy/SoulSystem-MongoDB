@@ -7,6 +7,7 @@ const {
   mapSoulPatch,
   mapGame,
   mapGamePatch,
+  mapGameNomination,
   mapGameParticipant,
   mapGamePost,
   mapGameRole,
@@ -161,6 +162,20 @@ test("maps game roles, participants, and posts into graph-shaped records", () =>
     entity: "0xgame",
     sbt: "42",
     roles: ["1"],
+  });
+
+  assert.deepEqual(mapGameNomination({
+    gameId: "0xGAME",
+    nominationId: "tx-1",
+    nominatorSoulId: "42",
+    nominatedSoulId: "77",
+    createdDate: 123,
+  }), {
+    _id: "0xgame_tx-1",
+    game: "0xgame",
+    createdDate: 123,
+    nominator: "42",
+    nominated: "77",
   });
 
   assert.deepEqual(mapGamePost({

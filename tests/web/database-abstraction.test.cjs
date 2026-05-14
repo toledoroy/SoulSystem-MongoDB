@@ -11,6 +11,7 @@ test("database abstraction exposes collection-scoped repositories", async () => 
   await database.accounts.upsert("0xabc", { soulId: "42" });
   await database.gameRoles.upsert("0xgame_1", { ctx: "0xgame", roleId: "1" });
   await database.gameParticipants.upsert("0xgame_42", { entity: "0xgame", sbt: "42", roles: ["1"] });
+  await database.gameNominations.upsert("0xgame_tx-1", { game: "0xgame", nominator: "42", nominated: "77" });
   await database.gamePosts.upsert("0xgame_tx-1", { entity: "0xgame", author: "42", uri: "ipfs://post" });
   await database.soulAttributes.upsert("ATTR_42_role_builder", {
     aEnd: "42",
@@ -53,6 +54,16 @@ test("database abstraction exposes collection-scoped repositories", async () => 
       update: {
         $set: { entity: "0xgame", sbt: "42", roles: ["1"] },
         $setOnInsert: { _id: "0xgame_42" },
+      },
+      options: { upsert: true },
+    },
+    {
+      collection: "gameNominations",
+      method: "updateOne",
+      filter: { _id: "0xgame_tx-1" },
+      update: {
+        $set: { game: "0xgame", nominator: "42", nominated: "77" },
+        $setOnInsert: { _id: "0xgame_tx-1" },
       },
       options: { upsert: true },
     },

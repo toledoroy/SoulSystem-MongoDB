@@ -44,7 +44,7 @@
 - [x] Add soul attribute and soul association mappers, deterministic IDs, collections, indexes, and service writes.
 - [ ] Add HTTP JSON API routes for soul attributes and associations.
 - [x] Add game role, participant, and post mappers, deterministic IDs, collections, indexes, and service writes.
-- [ ] Add game nominations.
+- [x] Add game nomination mappers, deterministic IDs, collections, indexes, and service writes.
 - [ ] Add claim stages, roles, participants, nominations, and posts.
 - [ ] Add payment events and aggregate payment totals.
 - [ ] Add actions/activity records.

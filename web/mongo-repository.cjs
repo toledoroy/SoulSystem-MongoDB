@@ -40,6 +40,9 @@ function createMongoRepository(db) {
     async upsertGameParticipant(id, patch) {
       await database.gameParticipants.upsert(id, patch);
     },
+    async upsertGameNomination(id, patch) {
+      await database.gameNominations.upsert(id, patch);
+    },
     async upsertGamePost(id, patch) {
       await database.gamePosts.upsert(id, patch);
     },

@@ -18,6 +18,10 @@ function gameRoleId(game, role) {
   return `${gameId(game)}_${String(role || "").trim()}`;
 }
 
+function gameNominationId(game, nomination) {
+  return `${gameId(game)}_${String(nomination || "").trim()}`;
+}
+
 function gameParticipantId(game, soul) {
   return `${gameId(game)}_${soulId(soul)}`;
 }
@@ -46,6 +50,7 @@ module.exports = {
   accountId,
   soulId,
   gameId,
+  gameNominationId,
   gameParticipantId,
   gamePostId,
   gameRoleId,

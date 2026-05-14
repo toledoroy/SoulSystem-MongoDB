@@ -2,6 +2,7 @@ const {
   accountId,
   soulId,
   gameId,
+  gameNominationId,
   gameParticipantId,
   gamePostId,
   gameRoleId,
@@ -91,6 +92,16 @@ function mapGameParticipant(input) {
   };
 }
 
+function mapGameNomination(input) {
+  return {
+    _id: gameNominationId(input.gameId, input.nominationId),
+    game: gameId(input.gameId),
+    createdDate: numberOrDefault(input.createdDate, 0),
+    nominator: soulId(input.nominatorSoulId),
+    nominated: soulId(input.nominatedSoulId),
+  };
+}
+
 function mapGamePost(input) {
   return pickDefined({
     _id: gamePostId(input.gameId, input.postId),
@@ -176,6 +187,7 @@ module.exports = {
   mapSoulPatch,
   mapGame,
   mapGamePatch,
+  mapGameNomination,
   mapGameParticipant,
   mapGamePost,
   mapGameRole,

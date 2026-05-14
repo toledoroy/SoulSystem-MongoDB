@@ -41,6 +41,14 @@ function getMongoIndexSpecs() {
       ],
     },
     {
+      collection: "gameNominations",
+      indexes: [
+        { keys: { game: 1, createdDate: -1 }, options: { name: "gameNominations_game_createdDate" } },
+        { keys: { nominator: 1 }, options: { name: "gameNominations_nominator" } },
+        { keys: { nominated: 1 }, options: { name: "gameNominations_nominated" } },
+      ],
+    },
+    {
       collection: "gamePosts",
       indexes: [
         { keys: { entity: 1, createdDate: -1 }, options: { name: "gamePosts_entity_createdDate" } },

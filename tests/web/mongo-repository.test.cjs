@@ -133,6 +133,7 @@ test("Mongo repository reads and upserts game roles, participants, and posts", a
   assert.deepEqual(await repo.getGameParticipant("0xgame_42"), { _id: "0xgame_42", roles: ["1"] });
   await repo.upsertGameRole("0xgame_1", { ctx: "0xgame", roleId: "1" });
   await repo.upsertGameParticipant("0xgame_42", { entity: "0xgame", sbt: "42", roles: ["1"] });
+  await repo.upsertGameNomination("0xgame_tx-1", { game: "0xgame", nominator: "42", nominated: "77" });
   await repo.upsertGamePost("0xgame_tx-1", { entity: "0xgame", author: "42", uri: "ipfs://post" });
 
   assert.deepEqual(db.calls, [
@@ -152,6 +153,16 @@ test("Mongo repository reads and upserts game roles, participants, and posts", a
       update: {
         $set: { entity: "0xgame", sbt: "42", roles: ["1"] },
         $setOnInsert: { _id: "0xgame_42" },
+      },
+      options: { upsert: true },
+    },
+    {
+      collection: "gameNominations",
+      method: "updateOne",
+      filter: { _id: "0xgame_tx-1" },
+      update: {
+        $set: { game: "0xgame", nominator: "42", nominated: "77" },
+        $setOnInsert: { _id: "0xgame_tx-1" },
       },
       options: { upsert: true },
     },

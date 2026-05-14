@@ -4,6 +4,7 @@ const {
   mapSoulPatch,
   mapGame,
   mapGamePatch,
+  mapGameNomination,
   mapGameParticipant,
   mapGamePost,
   mapGameRole,
@@ -86,6 +87,14 @@ async function createGamePost(repo, input) {
   await requireGame(repo, post.entity);
   await requireSoul(repo, post.author);
   await repo.upsertGamePost(post._id, withoutId(post));
+}
+
+async function createGameNomination(repo, input) {
+  const nomination = mapGameNomination(input);
+  await requireGame(repo, nomination.game);
+  await requireSoul(repo, nomination.nominator);
+  await requireSoul(repo, nomination.nominated);
+  await repo.upsertGameNomination(nomination._id, withoutId(nomination));
 }
 
 async function updateGame(repo, input) {
@@ -191,6 +200,7 @@ module.exports = {
   updateSoulProfile,
   deleteSoul,
   createGame,
+  createGameNomination,
   createGamePost,
   createGameRole,
   grantGameRole,
