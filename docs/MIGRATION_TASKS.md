@@ -1,6 +1,6 @@
 # MongoDB Migration Task Tracker
 
-**Last updated:** 2026-05-12
+**Last updated:** 2026-05-14
 
 ## Current Baseline
 
@@ -47,7 +47,7 @@
 - [x] Add game nomination mappers, deterministic IDs, collections, indexes, and service writes.
 - [x] Add claim stage, role, participant, nomination, and post mappers, deterministic IDs, collections, indexes, and service writes.
 - [x] Document the MongoDB collection schema.
-- [ ] Add payment events and aggregate payment totals.
+- [x] Skip payment events and aggregate payment totals because Web2 has no payment scope.
 - [ ] Add actions/activity records.
 - [ ] Add opinions and announcements.
 

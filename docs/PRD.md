@@ -1,6 +1,6 @@
 # SoulSystem MongoDB Migration PRD
 
-**Last updated:** 2026-05-12
+**Last updated:** 2026-05-14
 
 ## Summary
 
@@ -19,17 +19,17 @@ The next milestone is not chain ingestion. It is a backend application foundatio
   - `ActionRepo`
   - dynamic `Game` templates
   - dynamic `Claim` templates
-- The current GraphQL schema captures the important domain entities:
+- The legacy GraphQL schema captures the important domain entities used as migration reference:
   - accounts and souls
   - games and claims/processes
-  - roles, participants, nominations, posts, rules, actions, opinions, relations, attributes, and payment events
-- Event handlers already encode much of the business logic needed for the migration:
+  - roles, participants, nominations, posts, rules, actions, opinions, relations, attributes, and legacy payment events
+- Legacy event handlers encode much of the business logic used as reference material:
   - soul mint/transfer/burn handling
   - account-to-soul ownership mapping
   - metadata extraction from IPFS URIs
   - game and claim creation from hub events
   - game and claim roles from ERC1155-style role token events
-  - nominations, posts, stage changes, and payments
+  - nominations, posts, stage changes, and legacy payments
   - OpenRepo attributes and associations
   - Soul opinions and opinion history
 - Web2 migration scaffolding has started:
@@ -44,11 +44,13 @@ The next milestone is not chain ingestion. It is a backend application foundatio
   - MongoDB-backed service writes for game nominations
   - MongoDB-backed service writes for claim stages, roles, participants, nominations, and posts
   - MongoDB collection schema documented in `docs/DB_SCHEMA.md`
+- Web2 payment migration is skipped for now because payments are not part of the Web2 product scope.
 
 ### Not Started / Missing
 
 - HTTP JSON API routes for soul attributes and associations are not exposed yet.
-- Remaining domain services are still pending: payments, activity, opinions, and announcements.
+- Remaining domain services are still pending: actions/activity records, opinions, and announcements.
+- HTTP JSON API routes are still needed for the newer service-layer domain writes: soul relations, game workflow, claim workflow, and later activity/opinion flows.
 - Tests exist for the new Web2 scaffolding, HTTP CRUD slice, and first relation service slice, but not for the full application workflow surface.
 
 ### Local Verification
@@ -70,7 +72,7 @@ Replace The Graph/Web3 indexing as the product data layer with a MongoDB-backed 
 The migrated system should:
 
 - create and update application records directly in MongoDB,
-- persist query-ready MongoDB documents for souls, games, claims, posts, relationships, payments, and activity,
+- persist query-ready MongoDB documents for souls, games, claims, posts, relationships, and activity,
 - expose application-friendly APIs,
 - support normal Web2 validation, authorization, and audit fields.
 
@@ -80,6 +82,7 @@ The migrated system should:
 - Changing protocol event semantics.
 - Building a new frontend before the data layer is reliable.
 - Reading chain data, decoding logs, replaying blocks, or relying on RPCs for application state.
+- Migrating payment events or payment totals until Web2 product requirements include payments.
 
 ## Target Architecture
 
@@ -111,7 +114,7 @@ The migration should introduce a stable database abstraction before adding more 
 
 - **MongoDB**
   - Stores query-ready application documents.
-  - Uses indexes for owner lookups, soul lookups, context membership, posts, and payment totals.
+  - Uses indexes for owner lookups, soul lookups, context membership, nominations, posts, and relation lookups.
 
 - **API Layer**
   - Provides application queries currently handled through GraphQL subgraph queries.
@@ -191,10 +194,7 @@ These should preserve token quantities and role names. The existing code has bot
 
 ### Payments
 
-- `paymentEvents`
-- `paymentTotals`
-
-The ERC20 payment handler currently records individual events but does not update aggregate totals. The MongoDB implementation should make native and ERC20 payment aggregation consistent.
+Payment collections are intentionally out of scope for the current Web2 migration because the app does not use Web2 payments. Legacy payment handlers remain reference-only Web3 code.
 
 ## Important Porting Notes
 
@@ -213,6 +213,7 @@ The ERC20 payment handler currently records individual events but does not updat
 - What authentication/authorization model should guard writes?
 - What API compatibility is required for existing frontend consumers?
 - Should IPFS metadata be stored as raw bytes, normalized JSON, or both?
+- Which service-layer workflow writes should be exposed first as HTTP routes after core CRUD?
 
 ## Recommended Next Steps
 
@@ -223,39 +224,45 @@ The ERC20 payment handler currently records individual events but does not updat
 
 ### 2. Decide Backend Stack
 
-- Pick the service runtime and MongoDB library.
-- Add environment configuration for MongoDB URI and database name.
+- Completed: use plain Node HTTP plus the native MongoDB driver while the data layer is being established.
+- Completed: environment configuration exists for MongoDB URI and database name.
 
 ### 3. Define The Database Abstraction
 
-- Create a database module that exposes collection-scoped repositories instead of raw MongoDB driver calls.
-- Move collection names and deterministic `_id` composition into shared helpers.
-- Keep the repository interface graph-shaped so services can work against `accounts`, `souls`, `games`, `claims`, and later relation collections consistently.
+- Completed: database module exposes collection-scoped repositories instead of raw MongoDB driver calls.
+- Completed: collection names and deterministic `_id` composition live in shared helpers.
+- Completed: repository interface is graph-shaped for accounts, souls, games, claims, relations, game workflow records, and claim workflow records.
 
 ### 4. Add API Mappers For Graph-Shaped Records
 
-- Add mapper functions that transform Web2 API payloads into domain records resembling the Graph schema.
-- Replace planned ABI-derived field reads with explicit mapper inputs or service lookups.
-- Start with:
+- Completed: mapper functions transform Web2 API payloads into domain records resembling the Graph schema.
+- Completed: planned ABI-derived field reads have been replaced with explicit mapper inputs or service lookups for completed service slices.
+- Completed foundation mappers:
   - account to soul mapping
   - soul profile document
   - game context document
   - claim/process context document
+- Completed workflow mappers:
+  - soul attributes and associations
+  - game roles, participants, nominations, and posts
+  - claim stages, roles, participants, nominations, and posts
 
 ### 5. Define MongoDB Schemas And Indexes
 
-- Continue with `accounts`, `souls`, `games`, and `claims`.
-- Add indexes for:
+- Completed schema documentation: `docs/DB_SCHEMA.md`.
+- Completed indexes for:
   - `souls.owner`
   - `souls.handle`
   - `souls.searchField`
   - `games.hub`
   - `claims.hub`
   - `claims.game`
+  - game and claim workflow records
+  - soul relation records
 
 ### 6. Build The First Application Service Slice
 
-Start with the smallest useful vertical slice:
+Completed first vertical slice:
 
 - create soul
 - update soul profile
@@ -266,7 +273,9 @@ This creates the identity and context foundation required by most later app work
 
 ### 7. Add Replay-Safe Tests
 
-For each application write flow:
+In progress. Current tests cover required fields, missing references, idempotent role membership, deterministic IDs, mapper defaults, repository writes, and HTTP CRUD errors.
+
+Continue to verify for each new application write flow:
 
 - validate required fields,
 - avoid duplicate array entries on retries,
@@ -275,25 +284,25 @@ For each application write flow:
 
 ### 8. Build Remaining Domain Services
 
-Recommended order:
+Progress:
 
-1. Soul attributes and associations
-2. Game roles, participants, nominations, and posts
-3. Claim stages, roles, participants, nominations, and posts
-4. Payments and payment totals
-5. Actions/activity records
-6. Opinions and announcements
+1. Completed: soul attributes and associations
+2. Completed: game roles, participants, nominations, and posts
+3. Completed: claim stages, roles, participants, nominations, and posts
+4. Skipped: payments and payment totals, because Web2 has no payment scope
+5. Pending: actions/activity records
+6. Pending: opinions and announcements
 
-### 9. Build Read APIs
+### 9. Build Workflow APIs
 
-Create API endpoints around actual app workflows, not one endpoint per collection. First candidates:
+Core HTTP CRUD exists for souls, games, and claims. Next API work should expose actual app workflows, not one endpoint per collection. First candidates:
 
 - get soul profile by id, owner, or handle
 - search souls
 - get game overview with roles and participants
 - get claim/process overview with stage, roles, participants, nominations, and posts
 - get posts for a soul, game, or claim
-- get payment totals by sender/recipient/token
+- create/update soul relations, game workflow records, claim workflow records, actions/activity records, and opinion/announcement records
 
 ## Acceptance Criteria For Migration Foundation
 
