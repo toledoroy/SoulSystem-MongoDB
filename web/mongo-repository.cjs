@@ -7,6 +7,12 @@ function createMongoRepository(db) {
     async getSoul(id) {
       return database.souls.get(id);
     },
+    async getGame(id) {
+      return database.games.get(id);
+    },
+    async getClaim(id) {
+      return database.claims.get(id);
+    },
     async upsertSoul(id, patch) {
       await database.souls.upsert(id, patch);
     },
@@ -19,8 +25,14 @@ function createMongoRepository(db) {
     async upsertGame(address, patch) {
       await database.games.upsert(address, patch);
     },
+    async deleteGame(id) {
+      await database.games.delete(id);
+    },
     async upsertClaim(address, patch) {
       await database.claims.upsert(address, patch);
+    },
+    async deleteClaim(id) {
+      await database.claims.delete(id);
     },
   };
 }

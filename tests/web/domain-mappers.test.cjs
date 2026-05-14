@@ -6,7 +6,9 @@ const {
   mapSoul,
   mapSoulPatch,
   mapGame,
+  mapGamePatch,
   mapClaim,
+  mapClaimPatch,
 } = require("../../web/domain/mappers.cjs");
 
 test("maps API payloads into graph-shaped records", () => {
@@ -55,6 +57,50 @@ test("maps API payloads into graph-shaped records", () => {
     name: "Quest",
     type: "claim",
     role: "",
+    stage: 0,
+  });
+});
+
+test("preserves numeric stage zero and ignores undefined patch fields", () => {
+  assert.deepEqual(mapSoul({
+    soulId: "7",
+    owner: "0xDEF",
+    stage: 0,
+    role: "artist",
+  }), {
+    _id: "7",
+    owner: "0xdef",
+    type: "human",
+    role: "artist",
+    stage: 0,
+    name: "",
+    handle: "",
+    tags: [],
+    searchField: "0xdef",
+  });
+
+  assert.deepEqual(mapSoulPatch(
+    { _id: "7", owner: "0xdef", name: "Existing", handle: "old" },
+    { name: undefined, handle: "new" },
+  ), {
+    handle: "new",
+    searchField: "existing0xdef",
+  });
+});
+
+test("maps game and claim patches without undefined fields", () => {
+  assert.deepEqual(mapGamePatch({ name: "Guild 2", role: undefined }), {
+    name: "Guild 2",
+  });
+
+  assert.deepEqual(mapClaimPatch({
+    gameId: "0xGAME",
+    name: "Quest 2",
+    stage: 0,
+    role: undefined,
+  }), {
+    game: "0xgame",
+    name: "Quest 2",
     stage: 0,
   });
 });

@@ -4,8 +4,13 @@ const test = require("node:test");
 const {
   createSoul,
   updateSoulProfile,
+  deleteSoul,
   createGame,
+  updateGame,
+  deleteGame,
   createClaim,
+  updateClaim,
+  deleteClaim,
 } = require("../../web/application-service.cjs");
 
 test("creates an off-chain soul and account mapping", async () => {
@@ -57,11 +62,53 @@ test("updates an existing soul profile", async () => {
   ]);
 });
 
+test("normalizes soul ids before updating an existing profile", async () => {
+  const repo = createRecordingRepo({
+    soul: { _id: "42", owner: "0xabc", name: "Ada" },
+  });
+
+  await updateSoulProfile(repo, {
+    soulId: " 42 ",
+    name: "Ada Lovelace",
+  });
+
+  assert.deepEqual(repo.calls, [
+    ["getSoul", "42"],
+    ["upsertSoul", "42", {
+      name: "Ada Lovelace",
+      searchField: "ada lovelace0xabc",
+    }],
+  ]);
+});
+
 test("requires an existing soul before profile update", async () => {
   const repo = createRecordingRepo();
 
   await assert.rejects(
     () => updateSoulProfile(repo, { soulId: "missing", name: "Nobody" }),
+    /Soul not found/,
+  );
+});
+
+test("deletes an existing soul and clears its account mapping", async () => {
+  const repo = createRecordingRepo({
+    soul: { _id: "42", owner: "0xabc", name: "Ada" },
+  });
+
+  await deleteSoul(repo, { soulId: " 42 " });
+
+  assert.deepEqual(repo.calls, [
+    ["getSoul", "42"],
+    ["deleteSoul", "42"],
+    ["upsertAccount", "0xabc", { soulId: "" }],
+  ]);
+});
+
+test("requires an existing soul before delete", async () => {
+  const repo = createRecordingRepo();
+
+  await assert.rejects(
+    () => deleteSoul(repo, { soulId: "missing" }),
     /Soul not found/,
   );
 });
@@ -98,6 +145,66 @@ test("creates off-chain game and claim records", async () => {
   ]);
 });
 
+test("updates existing game and claim records", async () => {
+  const repo = createRecordingRepo({
+    game: { _id: "0xgame", name: "Guild" },
+    claim: { _id: "0xclaim", name: "Quest" },
+  });
+
+  await updateGame(repo, { gameId: " 0xGAME ", name: "Guild 2" });
+  await updateClaim(repo, { claimId: " 0xCLAIM ", gameId: "0xGAME", stage: 1 });
+
+  assert.deepEqual(repo.calls, [
+    ["getGame", "0xgame"],
+    ["upsertGame", "0xgame", { name: "Guild 2" }],
+    ["getClaim", "0xclaim"],
+    ["upsertClaim", "0xclaim", { game: "0xgame", stage: 1 }],
+  ]);
+});
+
+test("requires existing game and claim records before update", async () => {
+  const repo = createRecordingRepo();
+
+  await assert.rejects(
+    () => updateGame(repo, { gameId: "0xmissing", name: "Missing" }),
+    /Game not found/,
+  );
+  await assert.rejects(
+    () => updateClaim(repo, { claimId: "0xmissing", name: "Missing" }),
+    /Claim not found/,
+  );
+});
+
+test("deletes existing game and claim records", async () => {
+  const repo = createRecordingRepo({
+    game: { _id: "0xgame", name: "Guild" },
+    claim: { _id: "0xclaim", name: "Quest" },
+  });
+
+  await deleteGame(repo, { gameId: " 0xGAME " });
+  await deleteClaim(repo, { claimId: " 0xCLAIM " });
+
+  assert.deepEqual(repo.calls, [
+    ["getGame", "0xgame"],
+    ["deleteGame", "0xgame"],
+    ["getClaim", "0xclaim"],
+    ["deleteClaim", "0xclaim"],
+  ]);
+});
+
+test("requires existing game and claim records before delete", async () => {
+  const repo = createRecordingRepo();
+
+  await assert.rejects(
+    () => deleteGame(repo, { gameId: "0xmissing" }),
+    /Game not found/,
+  );
+  await assert.rejects(
+    () => deleteClaim(repo, { claimId: "0xmissing" }),
+    /Claim not found/,
+  );
+});
+
 function createRecordingRepo(seed = {}) {
   return {
     calls: [],
@@ -105,8 +212,19 @@ function createRecordingRepo(seed = {}) {
       this.calls.push(["getSoul", id]);
       return seed.soul || null;
     },
+    async getGame(id) {
+      this.calls.push(["getGame", id]);
+      return seed.game || null;
+    },
+    async getClaim(id) {
+      this.calls.push(["getClaim", id]);
+      return seed.claim || null;
+    },
     async upsertSoul(id, patch) {
       this.calls.push(["upsertSoul", id, patch]);
+    },
+    async deleteSoul(id) {
+      this.calls.push(["deleteSoul", id]);
     },
     async upsertAccount(id, patch) {
       this.calls.push(["upsertAccount", id, patch]);
@@ -114,8 +232,14 @@ function createRecordingRepo(seed = {}) {
     async upsertGame(id, patch) {
       this.calls.push(["upsertGame", id, patch]);
     },
+    async deleteGame(id) {
+      this.calls.push(["deleteGame", id]);
+    },
     async upsertClaim(id, patch) {
       this.calls.push(["upsertClaim", id, patch]);
+    },
+    async deleteClaim(id) {
+      this.calls.push(["deleteClaim", id]);
     },
   };
 }

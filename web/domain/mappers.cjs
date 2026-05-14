@@ -46,6 +46,14 @@ function mapGame(input) {
   };
 }
 
+function mapGamePatch(input) {
+  return pickDefined({
+    name: input.name,
+    type: input.type,
+    role: input.role,
+  });
+}
+
 function mapClaim(input) {
   return {
     _id: claimId(input.claimId),
@@ -55,6 +63,16 @@ function mapClaim(input) {
     role: input.role || "",
     stage: numberOrDefault(input.stage, 0),
   };
+}
+
+function mapClaimPatch(input) {
+  return pickDefined({
+    game: input.gameId ? gameId(input.gameId) : undefined,
+    name: input.name,
+    type: input.type,
+    role: input.role,
+    stage: input.stage,
+  });
 }
 
 function makeSearchField(entity) {
@@ -81,5 +99,7 @@ module.exports = {
   mapSoul,
   mapSoulPatch,
   mapGame,
+  mapGamePatch,
   mapClaim,
+  mapClaimPatch,
 };

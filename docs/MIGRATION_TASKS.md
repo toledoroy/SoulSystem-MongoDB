@@ -33,11 +33,11 @@
 - [x] Add graph-shaped mapper APIs for account, soul, game, and claim records.
 - [x] Replace planned ABI-derived reads with API payload fields, service lookups, or mapper defaults.
 - [x] Split Web2 runtime modules from Web3 legacy reference modules so new app code does not import `abis/`, `generated/`, `subgraph.yaml`, or `src/handlers/`.
-- [ ] Add HTTP JSON API routes for off-chain soul CRUD.
-- [ ] Add HTTP JSON API routes for off-chain game and claim CRUD.
-- [ ] Add request validation and consistent error responses.
-- [ ] Add read endpoints for homepage/application views.
-- [ ] Add live Mongo smoke tests for create/read/update using a test namespace or cleanup-safe records.
+- [x] Add HTTP JSON API routes for off-chain soul CRUD.
+- [x] Add HTTP JSON API routes for off-chain game and claim CRUD.
+- [x] Add request validation and consistent error responses.
+- [x] Add read endpoints for homepage/application views.
+- [x] Add live Mongo smoke tests for create/read/update using a test namespace or cleanup-safe records.
 
 ## Architecture Adjustments
 

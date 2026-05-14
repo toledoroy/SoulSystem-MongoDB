@@ -55,6 +55,34 @@ test("Mongo repository fetches souls", async () => {
   ]);
 });
 
+test("Mongo repository fetches games and claims", async () => {
+  const db = createDbRecorder({
+    games: new Map([["0xgame", { _id: "0xgame", name: "Guild" }]]),
+    claims: new Map([["0xclaim", { _id: "0xclaim", name: "Quest" }]]),
+  });
+  const repo = createMongoRepository(db);
+
+  assert.deepEqual(await repo.getGame("0xgame"), { _id: "0xgame", name: "Guild" });
+  assert.deepEqual(await repo.getClaim("0xclaim"), { _id: "0xclaim", name: "Quest" });
+  assert.deepEqual(db.calls, [
+    { collection: "games", method: "findOne", filter: { _id: "0xgame" } },
+    { collection: "claims", method: "findOne", filter: { _id: "0xclaim" } },
+  ]);
+});
+
+test("Mongo repository deletes games and claims", async () => {
+  const db = createDbRecorder();
+  const repo = createMongoRepository(db);
+
+  await repo.deleteGame("0xgame");
+  await repo.deleteClaim("0xclaim");
+
+  assert.deepEqual(db.calls, [
+    { collection: "games", method: "deleteOne", filter: { _id: "0xgame" } },
+    { collection: "claims", method: "deleteOne", filter: { _id: "0xclaim" } },
+  ]);
+});
+
 function createDbRecorder(seed = {}) {
   const calls = [];
 

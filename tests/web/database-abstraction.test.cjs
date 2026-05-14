@@ -34,12 +34,32 @@ test("database abstraction exposes collection-scoped repositories", async () => 
   ]);
 });
 
-function createDbRecorder() {
+test("database abstraction fetches documents by deterministic id", async () => {
+  const db = createDbRecorder({
+    games: new Map([["0xgame", { _id: "0xgame", name: "Guild" }]]),
+  });
+  const database = createDatabase(db);
+
+  assert.deepEqual(await database.games.get("0xgame"), {
+    _id: "0xgame",
+    name: "Guild",
+  });
+  assert.deepEqual(db.calls, [
+    { collection: "games", method: "findOne", filter: { _id: "0xgame" } },
+  ]);
+});
+
+function createDbRecorder(seed = {}) {
   const calls = [];
+
   return {
     calls,
     collection(name) {
       return {
+        async findOne(filter) {
+          calls.push({ collection: name, method: "findOne", filter });
+          return seed[name] ? seed[name].get(filter._id) || null : null;
+        },
         async updateOne(filter, update, options) {
           calls.push({ collection: name, method: "updateOne", filter, update, options });
         },

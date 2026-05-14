@@ -29,7 +29,7 @@
 - Create: `web/domain/ids.cjs`
 - Test: `tests/web/domain-ids.test.cjs`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 const assert = require("node:assert/strict");
@@ -52,13 +52,13 @@ test("builds deterministic graph-shaped ids", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `yarn test:web`
 
 Expected: FAIL with `Cannot find module '../../web/domain/ids.cjs'`.
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```js
 function normalizeId(value) {
@@ -94,7 +94,7 @@ module.exports = {
 };
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `yarn test:web`
 
@@ -107,7 +107,7 @@ Expected: PASS.
 - Test: `tests/web/domain-mappers.test.cjs`
 - Modify: `web/application-service.cjs`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 const assert = require("node:assert/strict");
@@ -172,13 +172,13 @@ test("maps API payloads into graph-shaped records", () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `yarn test:web`
 
 Expected: FAIL with `Cannot find module '../../web/domain/mappers.cjs'`.
 
-- [ ] **Step 3: Implement mapper module**
+- [x] **Step 3: Implement mapper module**
 
 ```js
 const { accountId, soulId, gameId, claimId } = require("./ids.cjs");
@@ -266,7 +266,7 @@ module.exports = {
 };
 ```
 
-- [ ] **Step 4: Refactor services to use mappers**
+- [x] **Step 4: Refactor services to use mappers**
 
 ```js
 const {
@@ -315,7 +315,7 @@ module.exports = {
 };
 ```
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
 Run: `yarn test:web`
 
@@ -329,7 +329,7 @@ Expected: PASS.
 - Modify: `web/mongo-repository.cjs`
 - Test: `tests/web/database-abstraction.test.cjs`
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
 ```js
 const assert = require("node:assert/strict");
@@ -386,13 +386,13 @@ function createDbRecorder() {
 }
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `yarn test:web`
 
 Expected: FAIL with `Cannot find module '../../web/db/database.cjs'`.
 
-- [ ] **Step 3: Implement collection constants**
+- [x] **Step 3: Implement collection constants**
 
 ```js
 const collections = {
@@ -407,7 +407,7 @@ module.exports = {
 };
 ```
 
-- [ ] **Step 4: Implement database abstraction**
+- [x] **Step 4: Implement database abstraction**
 
 ```js
 const { collections } = require("./collections.cjs");
@@ -447,7 +447,7 @@ module.exports = {
 };
 ```
 
-- [ ] **Step 5: Adapt Mongo repository to the abstraction**
+- [x] **Step 5: Adapt Mongo repository to the abstraction**
 
 ```js
 const { createDatabase } = require("./db/database.cjs");
@@ -482,7 +482,7 @@ module.exports = {
 };
 ```
 
-- [ ] **Step 6: Run tests**
+- [x] **Step 6: Run tests**
 
 Run: `yarn test:web`
 
@@ -494,7 +494,7 @@ Expected: PASS.
 - Modify: `README.md`
 - Modify: `docs/MIGRATION_TASKS.md`
 
-- [ ] **Step 1: Add a runtime boundary section to README**
+- [x] **Step 1: Add a runtime boundary section to README**
 
 ```md
 ## Runtime Boundaries
@@ -504,11 +504,11 @@ New Web2 runtime code lives under `web/` and should depend on HTTP handlers, app
 Legacy Web3 reference code lives in `abis/`, `generated/`, `subgraph.yaml`, `schema.graphql`, and `src/handlers/`. These files document contract and graph behavior during the migration, but new Web2 modules should not import generated subgraph bindings or ABI JSON directly.
 ```
 
-- [ ] **Step 2: Mark the implementation task complete as each code task lands**
+- [x] **Step 2: Mark the implementation task complete as each code task lands**
 
 Update `docs/MIGRATION_TASKS.md` checkboxes only after the related tests pass.
 
-- [ ] **Step 3: Run verification**
+- [x] **Step 3: Run verification**
 
 Run: `yarn test:web`
 

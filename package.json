@@ -4,6 +4,7 @@
   "scripts": {
     "start:web": "node web/server.cjs",
     "test:web": "node --test tests/web/*.test.cjs",
+    "test:web:live": "node tests/web/run-live-mongo-smoke.cjs",
     "mongo:indexes": "node web/apply-indexes.cjs",
     "codegen": "graph codegen",
     "build": "graph build",
