@@ -14,6 +14,18 @@ function gameId(address) {
   return normalizeId(address);
 }
 
+function gameRoleId(game, role) {
+  return `${gameId(game)}_${String(role || "").trim()}`;
+}
+
+function gameParticipantId(game, soul) {
+  return `${gameId(game)}_${soulId(soul)}`;
+}
+
+function gamePostId(game, post) {
+  return `${gameId(game)}_${String(post || "").trim()}`;
+}
+
 function claimId(address) {
   return normalizeId(address);
 }
@@ -34,6 +46,9 @@ module.exports = {
   accountId,
   soulId,
   gameId,
+  gameParticipantId,
+  gamePostId,
+  gameRoleId,
   claimId,
   relationId,
   soulAssociationId,

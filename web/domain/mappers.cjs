@@ -2,6 +2,9 @@ const {
   accountId,
   soulId,
   gameId,
+  gameParticipantId,
+  gamePostId,
+  gameRoleId,
   claimId,
   soulAssociationId,
   soulAttributeId,
@@ -58,6 +61,45 @@ function mapGamePatch(input) {
     name: input.name,
     type: input.type,
     role: input.role,
+  });
+}
+
+function mapGameRole(input) {
+  const mappedGameId = gameId(input.gameId);
+  const roleId = String(input.roleId || "").trim();
+
+  return {
+    _id: gameRoleId(mappedGameId, roleId),
+    ctx: mappedGameId,
+    roleId,
+    name: input.name || "",
+    uri: input.uri || "",
+    souls: input.souls || [],
+    soulsCount: numberOrDefault(input.soulsCount, 0),
+  };
+}
+
+function mapGameParticipant(input) {
+  const mappedGameId = gameId(input.gameId);
+  const mappedSoulId = soulId(input.soulId);
+
+  return {
+    _id: gameParticipantId(mappedGameId, mappedSoulId),
+    entity: mappedGameId,
+    sbt: mappedSoulId,
+    roles: input.roles || [],
+  };
+}
+
+function mapGamePost(input) {
+  return pickDefined({
+    _id: gamePostId(input.gameId, input.postId),
+    entity: gameId(input.gameId),
+    createdDate: input.createdDate,
+    author: soulId(input.authorSoulId),
+    entityRole: String(input.entityRole || "").trim(),
+    uri: input.uri || "",
+    metadata: input.metadata,
   });
 }
 
@@ -134,6 +176,9 @@ module.exports = {
   mapSoulPatch,
   mapGame,
   mapGamePatch,
+  mapGameParticipant,
+  mapGamePost,
+  mapGameRole,
   mapClaim,
   mapClaimPatch,
   mapSoulAssociation,

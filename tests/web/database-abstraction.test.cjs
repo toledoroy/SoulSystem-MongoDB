@@ -9,6 +9,9 @@ test("database abstraction exposes collection-scoped repositories", async () => 
 
   await database.souls.upsert("42", { owner: "0xabc" });
   await database.accounts.upsert("0xabc", { soulId: "42" });
+  await database.gameRoles.upsert("0xgame_1", { ctx: "0xgame", roleId: "1" });
+  await database.gameParticipants.upsert("0xgame_42", { entity: "0xgame", sbt: "42", roles: ["1"] });
+  await database.gamePosts.upsert("0xgame_tx-1", { entity: "0xgame", author: "42", uri: "ipfs://post" });
   await database.soulAttributes.upsert("ATTR_42_role_builder", {
     aEnd: "42",
     bEnd: "builder",
@@ -34,6 +37,33 @@ test("database abstraction exposes collection-scoped repositories", async () => 
       method: "updateOne",
       filter: { _id: "0xabc" },
       update: { $set: { soulId: "42" }, $setOnInsert: { _id: "0xabc" } },
+      options: { upsert: true },
+    },
+    {
+      collection: "gameRoles",
+      method: "updateOne",
+      filter: { _id: "0xgame_1" },
+      update: { $set: { ctx: "0xgame", roleId: "1" }, $setOnInsert: { _id: "0xgame_1" } },
+      options: { upsert: true },
+    },
+    {
+      collection: "gameParticipants",
+      method: "updateOne",
+      filter: { _id: "0xgame_42" },
+      update: {
+        $set: { entity: "0xgame", sbt: "42", roles: ["1"] },
+        $setOnInsert: { _id: "0xgame_42" },
+      },
+      options: { upsert: true },
+    },
+    {
+      collection: "gamePosts",
+      method: "updateOne",
+      filter: { _id: "0xgame_tx-1" },
+      update: {
+        $set: { entity: "0xgame", author: "42", uri: "ipfs://post" },
+        $setOnInsert: { _id: "0xgame_tx-1" },
+      },
       options: { upsert: true },
     },
     {

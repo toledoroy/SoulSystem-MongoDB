@@ -6,6 +6,8 @@ const {
   updateSoulProfile,
   deleteSoul,
   createGame,
+  createGamePost,
+  createGameRole,
   updateGame,
   deleteGame,
   createClaim,
@@ -13,6 +15,7 @@ const {
   deleteClaim,
   setSoulAssociation,
   setSoulAttribute,
+  grantGameRole,
 } = require("../../web/application-service.cjs");
 
 test("creates an off-chain soul and account mapping", async () => {
@@ -145,6 +148,110 @@ test("creates off-chain game and claim records", async () => {
       stage: 0,
     }],
   ]);
+});
+
+test("creates game roles with graph-shaped defaults", async () => {
+  const repo = createRecordingRepo({
+    game: { _id: "0xgame", name: "Guild" },
+  });
+
+  await createGameRole(repo, {
+    gameId: " 0xGAME ",
+    roleId: "1",
+    name: "Admin",
+    uri: "ipfs://role",
+  });
+
+  assert.deepEqual(repo.calls, [
+    ["getGame", "0xgame"],
+    ["upsertGameRole", "0xgame_1", {
+      ctx: "0xgame",
+      roleId: "1",
+      name: "Admin",
+      uri: "ipfs://role",
+      souls: [],
+      soulsCount: 0,
+    }],
+  ]);
+});
+
+test("grants game roles idempotently to participants and role membership", async () => {
+  const repo = createRecordingRepo({
+    game: { _id: "0xgame", name: "Guild" },
+    soul: { _id: "42", owner: "0xabc" },
+    gameRole: { _id: "0xgame_1", ctx: "0xgame", roleId: "1", name: "Admin", souls: ["42"], soulsCount: 1 },
+    gameParticipant: { _id: "0xgame_42", entity: "0xgame", sbt: "42", roles: ["1"] },
+  });
+
+  await grantGameRole(repo, {
+    gameId: "0xGAME",
+    soulId: "42",
+    roleId: "1",
+  });
+
+  assert.deepEqual(repo.calls, [
+    ["getGame", "0xgame"],
+    ["getSoul", "42"],
+    ["getGameRole", "0xgame_1"],
+    ["getGameParticipant", "0xgame_42"],
+    ["upsertGameParticipant", "0xgame_42", {
+      entity: "0xgame",
+      sbt: "42",
+      roles: ["1"],
+    }],
+    ["upsertGameRole", "0xgame_1", {
+      ctx: "0xgame",
+      roleId: "1",
+      name: "Admin",
+      souls: ["42"],
+      soulsCount: 1,
+    }],
+  ]);
+});
+
+test("creates game posts for existing game and author soul", async () => {
+  const repo = createRecordingRepo({
+    game: { _id: "0xgame", name: "Guild" },
+    soul: { _id: "42", owner: "0xabc" },
+  });
+
+  await createGamePost(repo, {
+    gameId: "0xGAME",
+    postId: "tx-1",
+    authorSoulId: "42",
+    entityRole: "1",
+    uri: "ipfs://post",
+    createdDate: 123,
+  });
+
+  assert.deepEqual(repo.calls, [
+    ["getGame", "0xgame"],
+    ["getSoul", "42"],
+    ["upsertGamePost", "0xgame_tx-1", {
+      entity: "0xgame",
+      createdDate: 123,
+      author: "42",
+      entityRole: "1",
+      uri: "ipfs://post",
+    }],
+  ]);
+});
+
+test("requires existing game domain records before game role writes", async () => {
+  const repo = createRecordingRepo();
+
+  await assert.rejects(
+    () => createGameRole(repo, { gameId: "0xmissing", roleId: "1", name: "Admin" }),
+    /Game not found/,
+  );
+  await assert.rejects(
+    () => grantGameRole(repo, { gameId: "0xmissing", soulId: "42", roleId: "1" }),
+    /Game not found/,
+  );
+  await assert.rejects(
+    () => createGamePost(repo, { gameId: "0xmissing", postId: "tx", authorSoulId: "42", uri: "ipfs:\/\/post" }),
+    /Game not found/,
+  );
 });
 
 test("updates existing game and claim records", async () => {
@@ -285,6 +392,14 @@ function createRecordingRepo(seed = {}) {
       this.calls.push(["getClaim", id]);
       return seed.claim || null;
     },
+    async getGameRole(id) {
+      this.calls.push(["getGameRole", id]);
+      return seed.gameRole || null;
+    },
+    async getGameParticipant(id) {
+      this.calls.push(["getGameParticipant", id]);
+      return seed.gameParticipant || null;
+    },
     async upsertSoul(id, patch) {
       this.calls.push(["upsertSoul", id, patch]);
     },
@@ -299,6 +414,15 @@ function createRecordingRepo(seed = {}) {
     },
     async deleteGame(id) {
       this.calls.push(["deleteGame", id]);
+    },
+    async upsertGameRole(id, patch) {
+      this.calls.push(["upsertGameRole", id, patch]);
+    },
+    async upsertGameParticipant(id, patch) {
+      this.calls.push(["upsertGameParticipant", id, patch]);
+    },
+    async upsertGamePost(id, patch) {
+      this.calls.push(["upsertGamePost", id, patch]);
     },
     async upsertClaim(id, patch) {
       this.calls.push(["upsertClaim", id, patch]);

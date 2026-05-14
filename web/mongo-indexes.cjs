@@ -28,6 +28,26 @@ function getMongoIndexSpecs() {
       ],
     },
     {
+      collection: "gameRoles",
+      indexes: [
+        { keys: { ctx: 1, roleId: 1 }, options: { name: "gameRoles_ctx_roleId" } },
+      ],
+    },
+    {
+      collection: "gameParticipants",
+      indexes: [
+        { keys: { entity: 1 }, options: { name: "gameParticipants_entity" } },
+        { keys: { sbt: 1 }, options: { name: "gameParticipants_sbt" } },
+      ],
+    },
+    {
+      collection: "gamePosts",
+      indexes: [
+        { keys: { entity: 1, createdDate: -1 }, options: { name: "gamePosts_entity_createdDate" } },
+        { keys: { author: 1 }, options: { name: "gamePosts_author" } },
+      ],
+    },
+    {
       collection: "soulAttributes",
       indexes: [
         { keys: { aEnd: 1, role: 1 }, options: { name: "soulAttributes_aEnd_role" } },

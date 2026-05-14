@@ -4,12 +4,15 @@ const {
   mapSoulPatch,
   mapGame,
   mapGamePatch,
+  mapGameParticipant,
+  mapGamePost,
+  mapGameRole,
   mapClaim,
   mapClaimPatch,
   mapSoulAssociation,
   mapSoulAttribute,
 } = require("./domain/mappers.cjs");
-const { soulId, gameId, claimId } = require("./domain/ids.cjs");
+const { soulId, gameId, gameParticipantId, gameRoleId, claimId } = require("./domain/ids.cjs");
 
 async function createSoul(repo, input) {
   const soul = mapSoul(input);
@@ -45,6 +48,44 @@ async function deleteSoul(repo, input) {
 async function createGame(repo, input) {
   const game = mapGame(input);
   await repo.upsertGame(game._id, withoutId(game));
+}
+
+async function createGameRole(repo, input) {
+  const role = mapGameRole(input);
+  await requireGame(repo, role.ctx);
+  await repo.upsertGameRole(role._id, withoutId(role));
+}
+
+async function grantGameRole(repo, input) {
+  const game = gameId(input.gameId);
+  const soul = soulId(input.soulId);
+  const roleId = String(input.roleId || "").trim();
+  await requireGame(repo, game);
+  await requireSoul(repo, soul);
+
+  const existingRole = await repo.getGameRole(gameRoleId(game, roleId));
+  const role = existingRole || mapGameRole({ gameId: game, roleId });
+  const roleSouls = addUnique(role.souls || [], soul);
+  const existingParticipant = await repo.getGameParticipant(gameParticipantId(game, soul));
+  const participant = mapGameParticipant({
+    gameId: game,
+    soulId: soul,
+    roles: addUnique(existingParticipant?.roles || [], roleId),
+  });
+
+  await repo.upsertGameParticipant(participant._id, withoutId(participant));
+  await repo.upsertGameRole(role._id, withoutId({
+    ...role,
+    souls: roleSouls,
+    soulsCount: roleSouls.length,
+  }));
+}
+
+async function createGamePost(repo, input) {
+  const post = mapGamePost(input);
+  await requireGame(repo, post.entity);
+  await requireSoul(repo, post.author);
+  await repo.upsertGamePost(post._id, withoutId(post));
 }
 
 async function updateGame(repo, input) {
@@ -92,6 +133,26 @@ async function deleteClaim(repo, input) {
   await repo.deleteClaim(id);
 }
 
+async function requireGame(repo, id) {
+  const existing = await repo.getGame(id);
+  if (!existing) {
+    throw new Error("Game not found");
+  }
+  return existing;
+}
+
+async function requireSoul(repo, id) {
+  const existing = await repo.getSoul(id);
+  if (!existing) {
+    throw new Error("Soul not found");
+  }
+  return existing;
+}
+
+function addUnique(values, value) {
+  return values.includes(value) ? values : [...values, value];
+}
+
 async function setSoulAttribute(repo, input) {
   const attribute = mapSoulAttribute(input);
   const existing = await repo.getSoul(attribute.aEnd);
@@ -130,6 +191,9 @@ module.exports = {
   updateSoulProfile,
   deleteSoul,
   createGame,
+  createGamePost,
+  createGameRole,
+  grantGameRole,
   updateGame,
   deleteGame,
   createClaim,

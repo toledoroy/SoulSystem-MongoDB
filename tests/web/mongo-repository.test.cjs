@@ -122,6 +122,52 @@ test("Mongo repository upserts soul attributes and associations", async () => {
   ]);
 });
 
+test("Mongo repository reads and upserts game roles, participants, and posts", async () => {
+  const db = createDbRecorder({
+    gameRoles: new Map([["0xgame_1", { _id: "0xgame_1", roleId: "1" }]]),
+    gameParticipants: new Map([["0xgame_42", { _id: "0xgame_42", roles: ["1"] }]]),
+  });
+  const repo = createMongoRepository(db);
+
+  assert.deepEqual(await repo.getGameRole("0xgame_1"), { _id: "0xgame_1", roleId: "1" });
+  assert.deepEqual(await repo.getGameParticipant("0xgame_42"), { _id: "0xgame_42", roles: ["1"] });
+  await repo.upsertGameRole("0xgame_1", { ctx: "0xgame", roleId: "1" });
+  await repo.upsertGameParticipant("0xgame_42", { entity: "0xgame", sbt: "42", roles: ["1"] });
+  await repo.upsertGamePost("0xgame_tx-1", { entity: "0xgame", author: "42", uri: "ipfs://post" });
+
+  assert.deepEqual(db.calls, [
+    { collection: "gameRoles", method: "findOne", filter: { _id: "0xgame_1" } },
+    { collection: "gameParticipants", method: "findOne", filter: { _id: "0xgame_42" } },
+    {
+      collection: "gameRoles",
+      method: "updateOne",
+      filter: { _id: "0xgame_1" },
+      update: { $set: { ctx: "0xgame", roleId: "1" }, $setOnInsert: { _id: "0xgame_1" } },
+      options: { upsert: true },
+    },
+    {
+      collection: "gameParticipants",
+      method: "updateOne",
+      filter: { _id: "0xgame_42" },
+      update: {
+        $set: { entity: "0xgame", sbt: "42", roles: ["1"] },
+        $setOnInsert: { _id: "0xgame_42" },
+      },
+      options: { upsert: true },
+    },
+    {
+      collection: "gamePosts",
+      method: "updateOne",
+      filter: { _id: "0xgame_tx-1" },
+      update: {
+        $set: { entity: "0xgame", author: "42", uri: "ipfs://post" },
+        $setOnInsert: { _id: "0xgame_tx-1" },
+      },
+      options: { upsert: true },
+    },
+  ]);
+});
+
 function createDbRecorder(seed = {}) {
   const calls = [];
 

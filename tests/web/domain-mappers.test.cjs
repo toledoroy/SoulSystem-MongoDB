@@ -7,6 +7,9 @@ const {
   mapSoulPatch,
   mapGame,
   mapGamePatch,
+  mapGameParticipant,
+  mapGamePost,
+  mapGameRole,
   mapClaim,
   mapClaimPatch,
   mapSoulAssociation,
@@ -130,5 +133,49 @@ test("maps soul attributes and associations into graph-shaped records", () => {
     bEnd: "77",
     role: "mentor",
     qty: 2,
+  });
+});
+
+test("maps game roles, participants, and posts into graph-shaped records", () => {
+  assert.deepEqual(mapGameRole({
+    gameId: " 0xGAME ",
+    roleId: "1",
+    name: "Admin",
+    uri: "ipfs://role",
+  }), {
+    _id: "0xgame_1",
+    ctx: "0xgame",
+    roleId: "1",
+    name: "Admin",
+    uri: "ipfs://role",
+    souls: [],
+    soulsCount: 0,
+  });
+
+  assert.deepEqual(mapGameParticipant({
+    gameId: "0xGAME",
+    soulId: "42",
+    roles: ["1"],
+  }), {
+    _id: "0xgame_42",
+    entity: "0xgame",
+    sbt: "42",
+    roles: ["1"],
+  });
+
+  assert.deepEqual(mapGamePost({
+    gameId: "0xGAME",
+    postId: "tx-1",
+    authorSoulId: "42",
+    entityRole: "1",
+    uri: "ipfs://post",
+    createdDate: 123,
+  }), {
+    _id: "0xgame_tx-1",
+    entity: "0xgame",
+    createdDate: 123,
+    author: "42",
+    entityRole: "1",
+    uri: "ipfs://post",
   });
 });
