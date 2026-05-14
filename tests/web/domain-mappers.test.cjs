@@ -12,7 +12,11 @@ const {
   mapGamePost,
   mapGameRole,
   mapClaim,
+  mapClaimNomination,
+  mapClaimParticipant,
   mapClaimPatch,
+  mapClaimPost,
+  mapClaimRole,
   mapSoulAssociation,
   mapSoulAttribute,
 } = require("../../web/domain/mappers.cjs");
@@ -188,6 +192,68 @@ test("maps game roles, participants, and posts into graph-shaped records", () =>
   }), {
     _id: "0xgame_tx-1",
     entity: "0xgame",
+    createdDate: 123,
+    author: "42",
+    entityRole: "1",
+    uri: "ipfs://post",
+  });
+});
+
+test("maps claim roles, participants, nominations, and posts into graph-shaped records", () => {
+  assert.deepEqual(mapClaimRole({
+    claimId: " 0xCLAIM ",
+    roleId: "1",
+    name: "Member",
+    role: "member",
+    uri: "ipfs://role",
+  }), {
+    _id: "0xclaim_1",
+    ctx: "0xclaim",
+    name: "Member",
+    uri: "ipfs://role",
+    role: "member",
+    roleId: "1",
+    souls: [],
+    soulsCount: 0,
+  });
+
+  assert.deepEqual(mapClaimParticipant({
+    claimId: "0xCLAIM",
+    soulId: "42",
+    roles: ["1"],
+  }), {
+    _id: "0xclaim_42",
+    entity: "0xclaim",
+    sbt: "42",
+    roles: ["1"],
+  });
+
+  assert.deepEqual(mapClaimNomination({
+    claimId: "0xCLAIM",
+    nominatedSoulId: "77",
+    nominatorSoulId: "42",
+    uri: "ipfs://nomination",
+    createdDate: 123,
+  }), {
+    _id: "0xclaim_77",
+    claim: "0xclaim",
+    createdDate: 123,
+    nominated: "77",
+    nominator: ["42"],
+    uri: ["ipfs://nomination"],
+    status: "pending",
+  });
+
+  assert.deepEqual(mapClaimPost({
+    claimId: "0xCLAIM",
+    postId: "tx-1",
+    authorSoulId: "42",
+    entityRole: "1",
+    uri: "ipfs://post",
+    createdDate: 123,
+  }), {
+    _id: "0xclaim_tx-1",
+    entity: "0xclaim",
     createdDate: 123,
     author: "42",
     entityRole: "1",

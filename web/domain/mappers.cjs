@@ -7,6 +7,10 @@ const {
   gamePostId,
   gameRoleId,
   claimId,
+  claimNominationId,
+  claimParticipantId,
+  claimPostId,
+  claimRoleId,
   soulAssociationId,
   soulAttributeId,
 } = require("./ids.cjs");
@@ -135,6 +139,61 @@ function mapClaimPatch(input) {
   });
 }
 
+function mapClaimRole(input) {
+  const mappedClaimId = claimId(input.claimId);
+  const roleId = String(input.roleId || "").trim();
+
+  return {
+    _id: claimRoleId(mappedClaimId, roleId),
+    ctx: mappedClaimId,
+    name: input.name || "",
+    uri: input.uri || "",
+    role: input.role || "",
+    roleId,
+    souls: input.souls || [],
+    soulsCount: numberOrDefault(input.soulsCount, 0),
+  };
+}
+
+function mapClaimParticipant(input) {
+  const mappedClaimId = claimId(input.claimId);
+  const mappedSoulId = soulId(input.soulId);
+
+  return {
+    _id: claimParticipantId(mappedClaimId, mappedSoulId),
+    entity: mappedClaimId,
+    sbt: mappedSoulId,
+    roles: input.roles || [],
+  };
+}
+
+function mapClaimNomination(input) {
+  const mappedClaimId = claimId(input.claimId);
+  const nominated = soulId(input.nominatedSoulId);
+
+  return {
+    _id: claimNominationId(mappedClaimId, nominated),
+    claim: mappedClaimId,
+    createdDate: numberOrDefault(input.createdDate, 0),
+    nominated,
+    nominator: input.nominator ? input.nominator : [soulId(input.nominatorSoulId)],
+    uri: input.uriList ? input.uriList : [input.uri || ""],
+    status: input.status || "pending",
+  };
+}
+
+function mapClaimPost(input) {
+  return pickDefined({
+    _id: claimPostId(input.claimId, input.postId),
+    entity: claimId(input.claimId),
+    createdDate: input.createdDate,
+    author: soulId(input.authorSoulId),
+    entityRole: String(input.entityRole || "").trim(),
+    uri: input.uri || "",
+    metadata: input.metadata,
+  });
+}
+
 function mapSoulAttribute(input) {
   const mappedSoulId = soulId(input.soulId);
   const role = String(input.role || "").trim();
@@ -192,7 +251,11 @@ module.exports = {
   mapGamePost,
   mapGameRole,
   mapClaim,
+  mapClaimNomination,
+  mapClaimParticipant,
   mapClaimPatch,
+  mapClaimPost,
+  mapClaimRole,
   mapSoulAssociation,
   mapSoulAttribute,
 };

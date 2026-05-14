@@ -13,6 +13,10 @@ test("database abstraction exposes collection-scoped repositories", async () => 
   await database.gameParticipants.upsert("0xgame_42", { entity: "0xgame", sbt: "42", roles: ["1"] });
   await database.gameNominations.upsert("0xgame_tx-1", { game: "0xgame", nominator: "42", nominated: "77" });
   await database.gamePosts.upsert("0xgame_tx-1", { entity: "0xgame", author: "42", uri: "ipfs://post" });
+  await database.claimRoles.upsert("0xclaim_1", { ctx: "0xclaim", roleId: "1" });
+  await database.claimParticipants.upsert("0xclaim_42", { entity: "0xclaim", sbt: "42", roles: ["1"] });
+  await database.claimNominations.upsert("0xclaim_77", { claim: "0xclaim", nominated: "77" });
+  await database.claimPosts.upsert("0xclaim_tx-1", { entity: "0xclaim", author: "42", uri: "ipfs://post" });
   await database.soulAttributes.upsert("ATTR_42_role_builder", {
     aEnd: "42",
     bEnd: "builder",
@@ -74,6 +78,40 @@ test("database abstraction exposes collection-scoped repositories", async () => 
       update: {
         $set: { entity: "0xgame", author: "42", uri: "ipfs://post" },
         $setOnInsert: { _id: "0xgame_tx-1" },
+      },
+      options: { upsert: true },
+    },
+    {
+      collection: "claimRoles",
+      method: "updateOne",
+      filter: { _id: "0xclaim_1" },
+      update: { $set: { ctx: "0xclaim", roleId: "1" }, $setOnInsert: { _id: "0xclaim_1" } },
+      options: { upsert: true },
+    },
+    {
+      collection: "claimParticipants",
+      method: "updateOne",
+      filter: { _id: "0xclaim_42" },
+      update: {
+        $set: { entity: "0xclaim", sbt: "42", roles: ["1"] },
+        $setOnInsert: { _id: "0xclaim_42" },
+      },
+      options: { upsert: true },
+    },
+    {
+      collection: "claimNominations",
+      method: "updateOne",
+      filter: { _id: "0xclaim_77" },
+      update: { $set: { claim: "0xclaim", nominated: "77" }, $setOnInsert: { _id: "0xclaim_77" } },
+      options: { upsert: true },
+    },
+    {
+      collection: "claimPosts",
+      method: "updateOne",
+      filter: { _id: "0xclaim_tx-1" },
+      update: {
+        $set: { entity: "0xclaim", author: "42", uri: "ipfs://post" },
+        $setOnInsert: { _id: "0xclaim_tx-1" },
       },
       options: { upsert: true },
     },

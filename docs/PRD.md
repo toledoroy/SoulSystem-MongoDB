@@ -42,11 +42,13 @@ The next milestone is not chain ingestion. It is a backend application foundatio
   - MongoDB-backed service writes for soul attributes and soul associations
   - MongoDB-backed service writes for game roles, participants, and posts
   - MongoDB-backed service writes for game nominations
+  - MongoDB-backed service writes for claim stages, roles, participants, nominations, and posts
+  - MongoDB collection schema documented in `docs/DB_SCHEMA.md`
 
 ### Not Started / Missing
 
 - HTTP JSON API routes for soul attributes and associations are not exposed yet.
-- Remaining domain services are still pending: claim workflow records, payments, activity, opinions, and announcements.
+- Remaining domain services are still pending: payments, activity, opinions, and announcements.
 - Tests exist for the new Web2 scaffolding, HTTP CRUD slice, and first relation service slice, but not for the full application workflow surface.
 
 ### Local Verification

@@ -34,6 +34,22 @@ function claimId(address) {
   return normalizeId(address);
 }
 
+function claimRoleId(claim, role) {
+  return `${claimId(claim)}_${String(role || "").trim()}`;
+}
+
+function claimParticipantId(claim, soul) {
+  return `${claimId(claim)}_${soulId(soul)}`;
+}
+
+function claimNominationId(claim, nomination) {
+  return `${claimId(claim)}_${String(nomination || "").trim()}`;
+}
+
+function claimPostId(claim, post) {
+  return `${claimId(claim)}_${String(post || "").trim()}`;
+}
+
 function relationId(...parts) {
   return parts.map((part) => String(part || "").trim()).join(":");
 }
@@ -55,6 +71,10 @@ module.exports = {
   gamePostId,
   gameRoleId,
   claimId,
+  claimNominationId,
+  claimParticipantId,
+  claimPostId,
+  claimRoleId,
   relationId,
   soulAssociationId,
   soulAttributeId,

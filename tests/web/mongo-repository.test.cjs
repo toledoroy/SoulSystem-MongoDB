@@ -179,6 +179,63 @@ test("Mongo repository reads and upserts game roles, participants, and posts", a
   ]);
 });
 
+test("Mongo repository reads and upserts claim workflow documents", async () => {
+  const db = createDbRecorder({
+    claimRoles: new Map([["0xclaim_1", { _id: "0xclaim_1", roleId: "1" }]]),
+    claimParticipants: new Map([["0xclaim_42", { _id: "0xclaim_42", roles: ["1"] }]]),
+    claimNominations: new Map([["0xclaim_77", { _id: "0xclaim_77", status: "pending" }]]),
+  });
+  const repo = createMongoRepository(db);
+
+  assert.deepEqual(await repo.getClaimRole("0xclaim_1"), { _id: "0xclaim_1", roleId: "1" });
+  assert.deepEqual(await repo.getClaimParticipant("0xclaim_42"), { _id: "0xclaim_42", roles: ["1"] });
+  assert.deepEqual(await repo.getClaimNomination("0xclaim_77"), { _id: "0xclaim_77", status: "pending" });
+  await repo.upsertClaimRole("0xclaim_1", { ctx: "0xclaim", roleId: "1" });
+  await repo.upsertClaimParticipant("0xclaim_42", { entity: "0xclaim", sbt: "42", roles: ["1"] });
+  await repo.upsertClaimNomination("0xclaim_77", { claim: "0xclaim", nominated: "77" });
+  await repo.upsertClaimPost("0xclaim_tx-1", { entity: "0xclaim", author: "42", uri: "ipfs://post" });
+
+  assert.deepEqual(db.calls, [
+    { collection: "claimRoles", method: "findOne", filter: { _id: "0xclaim_1" } },
+    { collection: "claimParticipants", method: "findOne", filter: { _id: "0xclaim_42" } },
+    { collection: "claimNominations", method: "findOne", filter: { _id: "0xclaim_77" } },
+    {
+      collection: "claimRoles",
+      method: "updateOne",
+      filter: { _id: "0xclaim_1" },
+      update: { $set: { ctx: "0xclaim", roleId: "1" }, $setOnInsert: { _id: "0xclaim_1" } },
+      options: { upsert: true },
+    },
+    {
+      collection: "claimParticipants",
+      method: "updateOne",
+      filter: { _id: "0xclaim_42" },
+      update: {
+        $set: { entity: "0xclaim", sbt: "42", roles: ["1"] },
+        $setOnInsert: { _id: "0xclaim_42" },
+      },
+      options: { upsert: true },
+    },
+    {
+      collection: "claimNominations",
+      method: "updateOne",
+      filter: { _id: "0xclaim_77" },
+      update: { $set: { claim: "0xclaim", nominated: "77" }, $setOnInsert: { _id: "0xclaim_77" } },
+      options: { upsert: true },
+    },
+    {
+      collection: "claimPosts",
+      method: "updateOne",
+      filter: { _id: "0xclaim_tx-1" },
+      update: {
+        $set: { entity: "0xclaim", author: "42", uri: "ipfs://post" },
+        $setOnInsert: { _id: "0xclaim_tx-1" },
+      },
+      options: { upsert: true },
+    },
+  ]);
+});
+
 function createDbRecorder(seed = {}) {
   const calls = [];
 

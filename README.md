@@ -26,6 +26,8 @@ New Web2 runtime code lives under `web/` and should depend on HTTP handlers, app
 
 Legacy Web3 reference code lives in `abis/`, `generated/`, `subgraph.yaml`, `schema.graphql`, and `src/handlers/`. These files document contract and graph behavior during the migration, but new Web2 modules should not import generated subgraph bindings or ABI JSON directly.
 
+The MongoDB collection schema for the Web2 service is documented in `docs/DB_SCHEMA.md`.
+
 ## MongoDB Smoke Test
 
 A smoke test is a quick live check that proves the main database path works end to end. Run the opt-in MongoDB smoke test only with a cleanup-safe test database configured:

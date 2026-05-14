@@ -56,6 +56,35 @@ function getMongoIndexSpecs() {
       ],
     },
     {
+      collection: "claimRoles",
+      indexes: [
+        { keys: { ctx: 1, roleId: 1 }, options: { name: "claimRoles_ctx_roleId" } },
+      ],
+    },
+    {
+      collection: "claimParticipants",
+      indexes: [
+        { keys: { entity: 1 }, options: { name: "claimParticipants_entity" } },
+        { keys: { sbt: 1 }, options: { name: "claimParticipants_sbt" } },
+      ],
+    },
+    {
+      collection: "claimNominations",
+      indexes: [
+        { keys: { claim: 1, createdDate: -1 }, options: { name: "claimNominations_claim_createdDate" } },
+        { keys: { nominator: 1 }, options: { name: "claimNominations_nominator" } },
+        { keys: { nominated: 1 }, options: { name: "claimNominations_nominated" } },
+        { keys: { status: 1 }, options: { name: "claimNominations_status", sparse: true } },
+      ],
+    },
+    {
+      collection: "claimPosts",
+      indexes: [
+        { keys: { entity: 1, createdDate: -1 }, options: { name: "claimPosts_entity_createdDate" } },
+        { keys: { author: 1 }, options: { name: "claimPosts_author" } },
+      ],
+    },
+    {
       collection: "soulAttributes",
       indexes: [
         { keys: { aEnd: 1, role: 1 }, options: { name: "soulAttributes_aEnd_role" } },

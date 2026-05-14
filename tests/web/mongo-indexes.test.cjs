@@ -16,6 +16,10 @@ test("defines indexes for the first MongoDB migration collections", () => {
     "gameParticipants",
     "gameNominations",
     "gamePosts",
+    "claimRoles",
+    "claimParticipants",
+    "claimNominations",
+    "claimPosts",
     "soulAttributes",
     "soulAssociations",
   ]);
@@ -50,6 +54,10 @@ test("creates MongoDB indexes from the specs", async () => {
   assert.ok(calls.some((call) => call.options.name === "gameParticipants_entity"));
   assert.ok(calls.some((call) => call.options.name === "gameNominations_game_createdDate"));
   assert.ok(calls.some((call) => call.options.name === "gamePosts_entity_createdDate"));
+  assert.ok(calls.some((call) => call.options.name === "claimRoles_ctx_roleId"));
+  assert.ok(calls.some((call) => call.options.name === "claimParticipants_entity"));
+  assert.ok(calls.some((call) => call.options.name === "claimNominations_claim_createdDate"));
+  assert.ok(calls.some((call) => call.options.name === "claimPosts_entity_createdDate"));
   assert.ok(calls.some((call) => call.options.name === "soulAttributes_aEnd_role"));
   assert.ok(calls.some((call) => call.options.name === "soulAssociations_aEnd_role"));
 });

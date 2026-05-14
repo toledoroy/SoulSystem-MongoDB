@@ -10,6 +10,10 @@ function createDatabase(db) {
     gameParticipants: createCollectionRepository(db, collections.gameParticipants),
     gameNominations: createCollectionRepository(db, collections.gameNominations),
     gamePosts: createCollectionRepository(db, collections.gamePosts),
+    claimRoles: createCollectionRepository(db, collections.claimRoles),
+    claimParticipants: createCollectionRepository(db, collections.claimParticipants),
+    claimNominations: createCollectionRepository(db, collections.claimNominations),
+    claimPosts: createCollectionRepository(db, collections.claimPosts),
     soulAttributes: createCollectionRepository(db, collections.soulAttributes),
     soulAssociations: createCollectionRepository(db, collections.soulAssociations),
   };

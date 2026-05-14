@@ -10,6 +10,10 @@ const {
   gamePostId,
   gameRoleId,
   claimId,
+  claimNominationId,
+  claimParticipantId,
+  claimPostId,
+  claimRoleId,
   relationId,
   soulAssociationId,
   soulAttributeId,
@@ -24,6 +28,10 @@ test("builds deterministic graph-shaped ids", () => {
   assert.equal(gameParticipantId("0xGAME", "42"), "0xgame_42");
   assert.equal(gamePostId("0xGAME", "tx-1"), "0xgame_tx-1");
   assert.equal(claimId(" 0xCLAIM "), "0xclaim");
+  assert.equal(claimRoleId("0xCLAIM", "1"), "0xclaim_1");
+  assert.equal(claimParticipantId("0xCLAIM", "42"), "0xclaim_42");
+  assert.equal(claimNominationId("0xCLAIM", "77"), "0xclaim_77");
+  assert.equal(claimPostId("0xCLAIM", "tx-1"), "0xclaim_tx-1");
   assert.equal(relationId("soul-1", "admin", "game-1"), "soul-1:admin:game-1");
   assert.equal(soulAttributeId("42", "role", "builder"), "ATTR_42_role_builder");
   assert.equal(soulAssociationId("42", "mentor", "77"), "ASSOC_42_mentor_77");

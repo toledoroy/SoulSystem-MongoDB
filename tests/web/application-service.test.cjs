@@ -12,6 +12,11 @@ const {
   updateGame,
   deleteGame,
   createClaim,
+  createClaimNomination,
+  createClaimPost,
+  createClaimRole,
+  grantClaimRole,
+  setClaimStage,
   updateClaim,
   deleteClaim,
   setSoulAssociation,
@@ -311,6 +316,163 @@ test("updates existing game and claim records", async () => {
   ]);
 });
 
+test("creates claim roles with graph-shaped defaults", async () => {
+  const repo = createRecordingRepo({
+    claim: { _id: "0xclaim", name: "Quest" },
+  });
+
+  await createClaimRole(repo, {
+    claimId: " 0xCLAIM ",
+    roleId: "1",
+    name: "Member",
+    role: "member",
+    uri: "ipfs://role",
+  });
+
+  assert.deepEqual(repo.calls, [
+    ["getClaim", "0xclaim"],
+    ["upsertClaimRole", "0xclaim_1", {
+      ctx: "0xclaim",
+      name: "Member",
+      uri: "ipfs://role",
+      role: "member",
+      roleId: "1",
+      souls: [],
+      soulsCount: 0,
+    }],
+  ]);
+});
+
+test("grants claim roles idempotently to participants and role membership", async () => {
+  const repo = createRecordingRepo({
+    claim: { _id: "0xclaim", name: "Quest" },
+    soul: { _id: "42", owner: "0xabc" },
+    claimRole: { _id: "0xclaim_1", ctx: "0xclaim", roleId: "1", name: "Member", souls: ["42"], soulsCount: 1 },
+    claimParticipant: { _id: "0xclaim_42", entity: "0xclaim", sbt: "42", roles: ["1"] },
+  });
+
+  await grantClaimRole(repo, {
+    claimId: "0xCLAIM",
+    soulId: "42",
+    roleId: "1",
+  });
+
+  assert.deepEqual(repo.calls, [
+    ["getClaim", "0xclaim"],
+    ["getSoul", "42"],
+    ["getClaimRole", "0xclaim_1"],
+    ["getClaimParticipant", "0xclaim_42"],
+    ["upsertClaimParticipant", "0xclaim_42", {
+      entity: "0xclaim",
+      sbt: "42",
+      roles: ["1"],
+    }],
+    ["upsertClaimRole", "0xclaim_1", {
+      ctx: "0xclaim",
+      roleId: "1",
+      name: "Member",
+      souls: ["42"],
+      soulsCount: 1,
+    }],
+  ]);
+});
+
+test("creates claim nominations and posts for existing claim and souls", async () => {
+  const repo = createRecordingRepo({
+    claim: { _id: "0xclaim", name: "Quest" },
+    souls: new Map([
+      ["42", { _id: "42", owner: "0xabc" }],
+      ["77", { _id: "77", owner: "0xdef" }],
+    ]),
+  });
+
+  await createClaimNomination(repo, {
+    claimId: "0xCLAIM",
+    nominatedSoulId: "77",
+    nominatorSoulId: "42",
+    uri: "ipfs://nomination",
+    createdDate: 123,
+  });
+  await createClaimPost(repo, {
+    claimId: "0xCLAIM",
+    postId: "tx-1",
+    authorSoulId: "42",
+    entityRole: "1",
+    uri: "ipfs://post",
+    createdDate: 124,
+  });
+
+  assert.deepEqual(repo.calls, [
+    ["getClaim", "0xclaim"],
+    ["getSoul", "42"],
+    ["getSoul", "77"],
+    ["getClaimNomination", "0xclaim_77"],
+    ["upsertClaimNomination", "0xclaim_77", {
+      claim: "0xclaim",
+      createdDate: 123,
+      nominated: "77",
+      nominator: ["42"],
+      uri: ["ipfs://nomination"],
+      status: "pending",
+    }],
+    ["getClaim", "0xclaim"],
+    ["getSoul", "42"],
+    ["upsertClaimPost", "0xclaim_tx-1", {
+      entity: "0xclaim",
+      createdDate: 124,
+      author: "42",
+      entityRole: "1",
+      uri: "ipfs://post",
+    }],
+  ]);
+});
+
+test("updates claim stage and timestamp", async () => {
+  const repo = createRecordingRepo({
+    claim: { _id: "0xclaim", name: "Quest", stage: 0 },
+  });
+
+  await setClaimStage(repo, {
+    claimId: " 0xCLAIM ",
+    stage: 2,
+    updatedDate: 456,
+  });
+
+  assert.deepEqual(repo.calls, [
+    ["getClaim", "0xclaim"],
+    ["upsertClaim", "0xclaim", { stage: 2, updatedDate: 456 }],
+  ]);
+});
+
+test("requires existing claim domain records before claim workflow writes", async () => {
+  const repo = createRecordingRepo();
+
+  await assert.rejects(
+    () => createClaimRole(repo, { claimId: "0xmissing", roleId: "1", name: "Member" }),
+    /Claim not found/,
+  );
+  await assert.rejects(
+    () => grantClaimRole(repo, { claimId: "0xmissing", soulId: "42", roleId: "1" }),
+    /Claim not found/,
+  );
+  await assert.rejects(
+    () => createClaimNomination(repo, {
+      claimId: "0xmissing",
+      nominatedSoulId: "77",
+      nominatorSoulId: "42",
+    }),
+    /Claim not found/,
+  );
+  await assert.rejects(
+    () => createClaimPost(repo, { claimId: "0xmissing", postId: "tx", authorSoulId: "42", uri: "ipfs://post" }),
+    /Claim not found/,
+  );
+  await assert.rejects(
+    () => setClaimStage(repo, { claimId: "0xmissing", stage: 1 }),
+    /Claim not found/,
+  );
+});
+
 test("requires existing game and claim records before update", async () => {
   const repo = createRecordingRepo();
 
@@ -440,6 +602,18 @@ function createRecordingRepo(seed = {}) {
       this.calls.push(["getGameParticipant", id]);
       return seed.gameParticipant || null;
     },
+    async getClaimRole(id) {
+      this.calls.push(["getClaimRole", id]);
+      return seed.claimRole || null;
+    },
+    async getClaimParticipant(id) {
+      this.calls.push(["getClaimParticipant", id]);
+      return seed.claimParticipant || null;
+    },
+    async getClaimNomination(id) {
+      this.calls.push(["getClaimNomination", id]);
+      return seed.claimNomination || null;
+    },
     async upsertSoul(id, patch) {
       this.calls.push(["upsertSoul", id, patch]);
     },
@@ -472,6 +646,18 @@ function createRecordingRepo(seed = {}) {
     },
     async deleteClaim(id) {
       this.calls.push(["deleteClaim", id]);
+    },
+    async upsertClaimRole(id, patch) {
+      this.calls.push(["upsertClaimRole", id, patch]);
+    },
+    async upsertClaimParticipant(id, patch) {
+      this.calls.push(["upsertClaimParticipant", id, patch]);
+    },
+    async upsertClaimNomination(id, patch) {
+      this.calls.push(["upsertClaimNomination", id, patch]);
+    },
+    async upsertClaimPost(id, patch) {
+      this.calls.push(["upsertClaimPost", id, patch]);
     },
     async upsertSoulAttribute(id, patch) {
       this.calls.push(["upsertSoulAttribute", id, patch]);

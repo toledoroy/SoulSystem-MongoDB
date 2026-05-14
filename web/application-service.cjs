@@ -9,11 +9,23 @@ const {
   mapGamePost,
   mapGameRole,
   mapClaim,
+  mapClaimNomination,
+  mapClaimParticipant,
   mapClaimPatch,
+  mapClaimPost,
+  mapClaimRole,
   mapSoulAssociation,
   mapSoulAttribute,
 } = require("./domain/mappers.cjs");
-const { soulId, gameId, gameParticipantId, gameRoleId, claimId } = require("./domain/ids.cjs");
+const {
+  soulId,
+  gameId,
+  gameParticipantId,
+  gameRoleId,
+  claimId,
+  claimParticipantId,
+  claimRoleId,
+} = require("./domain/ids.cjs");
 
 async function createSoul(repo, input) {
   const soul = mapSoul(input);
@@ -122,6 +134,72 @@ async function createClaim(repo, input) {
   await repo.upsertClaim(claim._id, withoutId(claim));
 }
 
+async function createClaimRole(repo, input) {
+  const role = mapClaimRole(input);
+  await requireClaim(repo, role.ctx);
+  await repo.upsertClaimRole(role._id, withoutId(role));
+}
+
+async function grantClaimRole(repo, input) {
+  const claim = claimId(input.claimId);
+  const soul = soulId(input.soulId);
+  const roleId = String(input.roleId || "").trim();
+  await requireClaim(repo, claim);
+  await requireSoul(repo, soul);
+
+  const existingRole = await repo.getClaimRole(claimRoleId(claim, roleId));
+  const role = existingRole || mapClaimRole({ claimId: claim, roleId });
+  const roleSouls = addUnique(role.souls || [], soul);
+  const existingParticipant = await repo.getClaimParticipant(claimParticipantId(claim, soul));
+  const participant = mapClaimParticipant({
+    claimId: claim,
+    soulId: soul,
+    roles: addUnique(existingParticipant?.roles || [], roleId),
+  });
+
+  await repo.upsertClaimParticipant(participant._id, withoutId(participant));
+  await repo.upsertClaimRole(role._id, withoutId({
+    ...role,
+    souls: roleSouls,
+    soulsCount: roleSouls.length,
+  }));
+}
+
+async function createClaimNomination(repo, input) {
+  const nomination = mapClaimNomination(input);
+  await requireClaim(repo, nomination.claim);
+  await requireSoul(repo, soulId(input.nominatorSoulId));
+  await requireSoul(repo, nomination.nominated);
+
+  const existing = await repo.getClaimNomination(nomination._id);
+  const merged = existing
+    ? {
+        ...nomination,
+        nominator: addUnique(existing.nominator || [], soulId(input.nominatorSoulId)),
+        uri: addUnique(existing.uri || [], input.uri || ""),
+        status: existing.status || nomination.status,
+      }
+    : nomination;
+
+  await repo.upsertClaimNomination(merged._id, withoutId(merged));
+}
+
+async function createClaimPost(repo, input) {
+  const post = mapClaimPost(input);
+  await requireClaim(repo, post.entity);
+  await requireSoul(repo, post.author);
+  await repo.upsertClaimPost(post._id, withoutId(post));
+}
+
+async function setClaimStage(repo, input) {
+  const id = claimId(input.claimId);
+  await requireClaim(repo, id);
+  await repo.upsertClaim(id, {
+    stage: input.stage,
+    updatedDate: input.updatedDate,
+  });
+}
+
 async function updateClaim(repo, input) {
   const id = claimId(input.claimId);
   const existing = await repo.getClaim(id);
@@ -146,6 +224,14 @@ async function requireGame(repo, id) {
   const existing = await repo.getGame(id);
   if (!existing) {
     throw new Error("Game not found");
+  }
+  return existing;
+}
+
+async function requireClaim(repo, id) {
+  const existing = await repo.getClaim(id);
+  if (!existing) {
+    throw new Error("Claim not found");
   }
   return existing;
 }
@@ -207,6 +293,11 @@ module.exports = {
   updateGame,
   deleteGame,
   createClaim,
+  createClaimNomination,
+  createClaimPost,
+  createClaimRole,
+  grantClaimRole,
+  setClaimStage,
   updateClaim,
   deleteClaim,
   setSoulAssociation,
