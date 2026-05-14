@@ -34,6 +34,12 @@ function createMongoRepository(db) {
     async deleteClaim(id) {
       await database.claims.delete(id);
     },
+    async upsertSoulAttribute(id, patch) {
+      await database.soulAttributes.upsert(id, patch);
+    },
+    async upsertSoulAssociation(id, patch) {
+      await database.soulAssociations.upsert(id, patch);
+    },
   };
 }
 

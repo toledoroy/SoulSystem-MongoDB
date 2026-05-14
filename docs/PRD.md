@@ -38,14 +38,14 @@ The next milestone is not chain ingestion. It is a backend application foundatio
   - MongoDB index specifications for first-slice collections
   - MongoDB repository adapter for core app-owned records
   - off-chain application service for creating/updating souls, games, and claims
+  - HTTP JSON API routes and validation for app-owned soul, game, and claim CRUD
+  - MongoDB-backed service writes for soul attributes and soul associations
 
 ### Not Started / Missing
 
-- MongoDB index specs exist and have been applied to the live database for the first-slice collections.
-- A minimal backend homepage/health endpoint exists, but no application read API exists yet.
-- No HTTP JSON API exists yet for app-owned soul/game/claim CRUD.
-- No request validation layer exists yet.
-- Tests exist for the new Web2 scaffolding and first off-chain service slice, but not for the full application workflow surface.
+- HTTP JSON API routes for soul attributes and associations are not exposed yet.
+- Remaining domain services are still pending: game roles, participants, nominations, posts, claim workflow records, payments, activity, opinions, and announcements.
+- Tests exist for the new Web2 scaffolding, HTTP CRUD slice, and first relation service slice, but not for the full application workflow surface.
 
 ### Local Verification
 

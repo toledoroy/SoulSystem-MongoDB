@@ -6,6 +6,8 @@ function createDatabase(db) {
     souls: createCollectionRepository(db, collections.souls),
     games: createCollectionRepository(db, collections.games),
     claims: createCollectionRepository(db, collections.claims),
+    soulAttributes: createCollectionRepository(db, collections.soulAttributes),
+    soulAssociations: createCollectionRepository(db, collections.soulAssociations),
   };
 }
 

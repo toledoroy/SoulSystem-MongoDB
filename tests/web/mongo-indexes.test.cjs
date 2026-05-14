@@ -12,6 +12,8 @@ test("defines indexes for the first MongoDB migration collections", () => {
     "souls",
     "games",
     "claims",
+    "soulAttributes",
+    "soulAssociations",
   ]);
 
   assert.deepEqual(specs.find((spec) => spec.collection === "souls").indexes, [
@@ -40,4 +42,6 @@ test("creates MongoDB indexes from the specs", async () => {
     options: { name: "accounts_soulId", sparse: true },
   });
   assert.ok(calls.some((call) => call.options.name === "claims_game"));
+  assert.ok(calls.some((call) => call.options.name === "soulAttributes_aEnd_role"));
+  assert.ok(calls.some((call) => call.options.name === "soulAssociations_aEnd_role"));
 });

@@ -9,6 +9,8 @@ const {
   mapGamePatch,
   mapClaim,
   mapClaimPatch,
+  mapSoulAssociation,
+  mapSoulAttribute,
 } = require("../../web/domain/mappers.cjs");
 
 test("maps API payloads into graph-shaped records", () => {
@@ -102,5 +104,31 @@ test("maps game and claim patches without undefined fields", () => {
     game: "0xgame",
     name: "Quest 2",
     stage: 0,
+  });
+});
+
+test("maps soul attributes and associations into graph-shaped records", () => {
+  assert.deepEqual(mapSoulAttribute({
+    soulId: " 42 ",
+    role: "role",
+    value: "builder",
+  }), {
+    _id: "ATTR_42_role_builder",
+    aEnd: "42",
+    bEnd: "builder",
+    role: "role",
+  });
+
+  assert.deepEqual(mapSoulAssociation({
+    fromSoulId: " 42 ",
+    role: "mentor",
+    toSoulId: " 77 ",
+    qty: 2,
+  }), {
+    _id: "ASSOC_42_mentor_77",
+    aEnd: "42",
+    bEnd: "77",
+    role: "mentor",
+    qty: 2,
   });
 });

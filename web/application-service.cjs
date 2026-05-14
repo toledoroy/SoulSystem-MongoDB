@@ -6,6 +6,8 @@ const {
   mapGamePatch,
   mapClaim,
   mapClaimPatch,
+  mapSoulAssociation,
+  mapSoulAttribute,
 } = require("./domain/mappers.cjs");
 const { soulId, gameId, claimId } = require("./domain/ids.cjs");
 
@@ -90,6 +92,34 @@ async function deleteClaim(repo, input) {
   await repo.deleteClaim(id);
 }
 
+async function setSoulAttribute(repo, input) {
+  const attribute = mapSoulAttribute(input);
+  const existing = await repo.getSoul(attribute.aEnd);
+  if (!existing) {
+    throw new Error("Soul not found");
+  }
+
+  await repo.upsertSoulAttribute(attribute._id, withoutId(attribute));
+  if (attribute.role === "role") {
+    await repo.upsertSoul(attribute.aEnd, { role: attribute.bEnd });
+  }
+}
+
+async function setSoulAssociation(repo, input) {
+  const association = mapSoulAssociation(input);
+  const source = await repo.getSoul(association.aEnd);
+  if (!source) {
+    throw new Error("Source soul not found");
+  }
+
+  const target = await repo.getSoul(association.bEnd);
+  if (!target) {
+    throw new Error("Target soul not found");
+  }
+
+  await repo.upsertSoulAssociation(association._id, withoutId(association));
+}
+
 function withoutId(record) {
   const { _id, ...rest } = record;
   return rest;
@@ -105,4 +135,6 @@ module.exports = {
   createClaim,
   updateClaim,
   deleteClaim,
+  setSoulAssociation,
+  setSoulAttribute,
 };

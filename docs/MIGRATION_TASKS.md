@@ -39,6 +39,16 @@
 - [x] Add read endpoints for homepage/application views.
 - [x] Add live Mongo smoke tests for create/read/update using a test namespace or cleanup-safe records.
 
+## Remaining Domain Services
+
+- [x] Add soul attribute and soul association mappers, deterministic IDs, collections, indexes, and service writes.
+- [ ] Add HTTP JSON API routes for soul attributes and associations.
+- [ ] Add game roles, participants, nominations, and posts.
+- [ ] Add claim stages, roles, participants, nominations, and posts.
+- [ ] Add payment events and aggregate payment totals.
+- [ ] Add actions/activity records.
+- [ ] Add opinions and announcements.
+
 ## Architecture Adjustments
 
 - Contracts should be modeled as MongoDB collections and graph-shaped documents, not live contract handles.

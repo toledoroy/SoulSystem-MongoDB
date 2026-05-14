@@ -9,6 +9,16 @@ test("database abstraction exposes collection-scoped repositories", async () => 
 
   await database.souls.upsert("42", { owner: "0xabc" });
   await database.accounts.upsert("0xabc", { soulId: "42" });
+  await database.soulAttributes.upsert("ATTR_42_role_builder", {
+    aEnd: "42",
+    bEnd: "builder",
+    role: "role",
+  });
+  await database.soulAssociations.upsert("ASSOC_42_mentor_77", {
+    aEnd: "42",
+    bEnd: "77",
+    role: "mentor",
+  });
   await database.souls.delete("42");
 
   assert.deepEqual(db.calls, [
@@ -24,6 +34,26 @@ test("database abstraction exposes collection-scoped repositories", async () => 
       method: "updateOne",
       filter: { _id: "0xabc" },
       update: { $set: { soulId: "42" }, $setOnInsert: { _id: "0xabc" } },
+      options: { upsert: true },
+    },
+    {
+      collection: "soulAttributes",
+      method: "updateOne",
+      filter: { _id: "ATTR_42_role_builder" },
+      update: {
+        $set: { aEnd: "42", bEnd: "builder", role: "role" },
+        $setOnInsert: { _id: "ATTR_42_role_builder" },
+      },
+      options: { upsert: true },
+    },
+    {
+      collection: "soulAssociations",
+      method: "updateOne",
+      filter: { _id: "ASSOC_42_mentor_77" },
+      update: {
+        $set: { aEnd: "42", bEnd: "77", role: "mentor" },
+        $setOnInsert: { _id: "ASSOC_42_mentor_77" },
+      },
       options: { upsert: true },
     },
     {

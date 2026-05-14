@@ -27,6 +27,20 @@ function getMongoIndexSpecs() {
         { keys: { game: 1 }, options: { name: "claims_game", sparse: true } },
       ],
     },
+    {
+      collection: "soulAttributes",
+      indexes: [
+        { keys: { aEnd: 1, role: 1 }, options: { name: "soulAttributes_aEnd_role" } },
+        { keys: { bEnd: 1, role: 1 }, options: { name: "soulAttributes_bEnd_role" } },
+      ],
+    },
+    {
+      collection: "soulAssociations",
+      indexes: [
+        { keys: { aEnd: 1, role: 1 }, options: { name: "soulAssociations_aEnd_role" } },
+        { keys: { bEnd: 1, role: 1 }, options: { name: "soulAssociations_bEnd_role" } },
+      ],
+    },
   ];
 }
 

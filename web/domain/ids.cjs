@@ -22,10 +22,20 @@ function relationId(...parts) {
   return parts.map((part) => String(part || "").trim()).join(":");
 }
 
+function soulAttributeId(soul, role, value) {
+  return `ATTR_${soulId(soul)}_${String(role || "").trim()}_${String(value || "").trim()}`;
+}
+
+function soulAssociationId(fromSoul, role, toSoul) {
+  return `ASSOC_${soulId(fromSoul)}_${String(role || "").trim()}_${soulId(toSoul)}`;
+}
+
 module.exports = {
   accountId,
   soulId,
   gameId,
   claimId,
   relationId,
+  soulAssociationId,
+  soulAttributeId,
 };

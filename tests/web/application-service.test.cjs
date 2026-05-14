@@ -11,6 +11,8 @@ const {
   createClaim,
   updateClaim,
   deleteClaim,
+  setSoulAssociation,
+  setSoulAttribute,
 } = require("../../web/application-service.cjs");
 
 test("creates an off-chain soul and account mapping", async () => {
@@ -205,11 +207,74 @@ test("requires existing game and claim records before delete", async () => {
   );
 });
 
+test("sets soul attributes and caches role attributes on the soul", async () => {
+  const repo = createRecordingRepo({
+    soul: { _id: "42", owner: "0xabc", role: "" },
+  });
+
+  await setSoulAttribute(repo, {
+    soulId: " 42 ",
+    role: "role",
+    value: "builder",
+  });
+
+  assert.deepEqual(repo.calls, [
+    ["getSoul", "42"],
+    ["upsertSoulAttribute", "ATTR_42_role_builder", {
+      aEnd: "42",
+      bEnd: "builder",
+      role: "role",
+    }],
+    ["upsertSoul", "42", { role: "builder" }],
+  ]);
+});
+
+test("sets soul associations between existing souls", async () => {
+  const repo = createRecordingRepo({
+    souls: new Map([
+      ["42", { _id: "42", owner: "0xabc" }],
+      ["77", { _id: "77", owner: "0xdef" }],
+    ]),
+  });
+
+  await setSoulAssociation(repo, {
+    fromSoulId: "42",
+    role: "mentor",
+    toSoulId: "77",
+    qty: 2,
+  });
+
+  assert.deepEqual(repo.calls, [
+    ["getSoul", "42"],
+    ["getSoul", "77"],
+    ["upsertSoulAssociation", "ASSOC_42_mentor_77", {
+      aEnd: "42",
+      bEnd: "77",
+      role: "mentor",
+      qty: 2,
+    }],
+  ]);
+});
+
+test("requires existing souls before writing soul relations", async () => {
+  const repo = createRecordingRepo();
+
+  await assert.rejects(
+    () => setSoulAttribute(repo, { soulId: "missing", role: "role", value: "builder" }),
+    /Soul not found/,
+  );
+  await assert.rejects(
+    () => setSoulAssociation(repo, { fromSoulId: "missing", role: "mentor", toSoulId: "77" }),
+    /Source soul not found/,
+  );
+});
+
 function createRecordingRepo(seed = {}) {
   return {
     calls: [],
     async getSoul(id) {
       this.calls.push(["getSoul", id]);
+      if (seed.souls) return seed.souls.get(id) || null;
       return seed.soul || null;
     },
     async getGame(id) {
@@ -240,6 +305,12 @@ function createRecordingRepo(seed = {}) {
     },
     async deleteClaim(id) {
       this.calls.push(["deleteClaim", id]);
+    },
+    async upsertSoulAttribute(id, patch) {
+      this.calls.push(["upsertSoulAttribute", id, patch]);
+    },
+    async upsertSoulAssociation(id, patch) {
+      this.calls.push(["upsertSoulAssociation", id, patch]);
     },
   };
 }

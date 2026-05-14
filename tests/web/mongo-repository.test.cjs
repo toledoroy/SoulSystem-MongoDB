@@ -83,6 +83,45 @@ test("Mongo repository deletes games and claims", async () => {
   ]);
 });
 
+test("Mongo repository upserts soul attributes and associations", async () => {
+  const db = createDbRecorder();
+  const repo = createMongoRepository(db);
+
+  await repo.upsertSoulAttribute("ATTR_42_role_builder", {
+    aEnd: "42",
+    bEnd: "builder",
+    role: "role",
+  });
+  await repo.upsertSoulAssociation("ASSOC_42_mentor_77", {
+    aEnd: "42",
+    bEnd: "77",
+    role: "mentor",
+  });
+
+  assert.deepEqual(db.calls, [
+    {
+      collection: "soulAttributes",
+      method: "updateOne",
+      filter: { _id: "ATTR_42_role_builder" },
+      update: {
+        $set: { aEnd: "42", bEnd: "builder", role: "role" },
+        $setOnInsert: { _id: "ATTR_42_role_builder" },
+      },
+      options: { upsert: true },
+    },
+    {
+      collection: "soulAssociations",
+      method: "updateOne",
+      filter: { _id: "ASSOC_42_mentor_77" },
+      update: {
+        $set: { aEnd: "42", bEnd: "77", role: "mentor" },
+        $setOnInsert: { _id: "ASSOC_42_mentor_77" },
+      },
+      options: { upsert: true },
+    },
+  ]);
+});
+
 function createDbRecorder(seed = {}) {
   const calls = [];
 

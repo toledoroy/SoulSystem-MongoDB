@@ -1,4 +1,11 @@
-const { accountId, soulId, gameId, claimId } = require("./ids.cjs");
+const {
+  accountId,
+  soulId,
+  gameId,
+  claimId,
+  soulAssociationId,
+  soulAttributeId,
+} = require("./ids.cjs");
 
 function mapAccount(input) {
   return {
@@ -75,6 +82,33 @@ function mapClaimPatch(input) {
   });
 }
 
+function mapSoulAttribute(input) {
+  const mappedSoulId = soulId(input.soulId);
+  const role = String(input.role || "").trim();
+  const value = String(input.value || "").trim();
+
+  return {
+    _id: soulAttributeId(mappedSoulId, role, value),
+    aEnd: mappedSoulId,
+    bEnd: value,
+    role,
+  };
+}
+
+function mapSoulAssociation(input) {
+  const fromSoulId = soulId(input.fromSoulId);
+  const toSoulId = soulId(input.toSoulId);
+  const role = String(input.role || "").trim();
+
+  return pickDefined({
+    _id: soulAssociationId(fromSoulId, role, toSoulId),
+    aEnd: fromSoulId,
+    bEnd: toSoulId,
+    role,
+    qty: input.qty,
+  });
+}
+
 function makeSearchField(entity) {
   const fields = [];
   if (entity.name) fields.push(entity.name);
@@ -102,4 +136,6 @@ module.exports = {
   mapGamePatch,
   mapClaim,
   mapClaimPatch,
+  mapSoulAssociation,
+  mapSoulAttribute,
 };
