@@ -1,20 +1,13 @@
 const http = require("node:http");
 
 const { loadLocalEnv } = require("./env.cjs");
-const { createApiHandler } = require("./api-handler.cjs");
 const { checkMongoHealth } = require("./health.cjs");
 const { renderHomepage } = require("./homepage.cjs");
-const { createMongoConnection } = require("./mongo-client.cjs");
 
 loadLocalEnv();
 
 function createServer(options = {}) {
   const healthCheck = options.checkMongoHealth || checkMongoHealth;
-  const createConnection = options.createMongoConnection || createMongoConnection;
-  const handleApiRequest = createApiHandler({
-    repository: options.repository,
-    createMongoConnection: createConnection,
-  });
 
   return http.createServer(async (request, response) => {
     const url = new URL(request.url, "http://localhost");
@@ -25,11 +18,6 @@ function createServer(options = {}) {
         "content-type": "application/json; charset=utf-8",
       });
       response.end(JSON.stringify({ mongo }));
-      return;
-    }
-
-    if (url.pathname.startsWith("/api/")) {
-      await handleApiRequest(request, response);
       return;
     }
 
