@@ -1,5 +1,8 @@
+const { loadLocalEnv } = require("./env.cjs");
 const { createMongoConnection } = require("./mongo-client.cjs");
 const { getMongoIndexSpecs, initializeMongoIndexes } = require("./mongo-indexes.cjs");
+
+loadLocalEnv();
 
 async function applyMongoIndexes(options = {}) {
   const createConnection = options.createConnection || createMongoConnection;
